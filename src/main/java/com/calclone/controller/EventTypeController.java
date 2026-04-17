@@ -80,12 +80,44 @@ public class EventTypeController {
         return "redirect:/events/" + event.getUser().getId();
     }
 
-
     @GetMapping("/edit/{id}")
-    public String editEvent(@PathVariable Long id, Model model) {
+    public String editDetailed(@PathVariable Long id, Model model) {
         EventType event = eventTypeService.getById(id);
         model.addAttribute("event", event);
-        model.addAttribute("userId", event.getUser().getId());
+        model.addAttribute("user", event.getUser());
         return "edit-event";
+    }
+
+    @PostMapping("/update/{id}")
+    public String updateEvent(@PathVariable Long id,
+                              @ModelAttribute EventType updatedEvent) {
+
+        EventType event = eventTypeService.getById(id);
+
+        event.setTitle(updatedEvent.getTitle());
+        event.setDescription(updatedEvent.getDescription());
+        event.setSlug(updatedEvent.getSlug());
+        event.setDuration(updatedEvent.getDuration());
+
+        eventTypeService.save(event);
+
+        return "redirect:/events/" + event.getUser().getId();
+    }
+
+    @GetMapping("/duplicate/{id}")
+    public String duplicateEvent(@PathVariable Long id) {
+
+        EventType event = eventTypeService.getById(id);
+
+        EventType copy = new EventType();
+        copy.setTitle(event.getTitle() + " Copy");
+        copy.setDescription(event.getDescription());
+        copy.setSlug(event.getSlug() + "-copy");
+        copy.setDuration(event.getDuration());
+        copy.setUser(event.getUser());
+
+        eventTypeService.save(copy);
+
+        return "redirect:/events/" + event.getUser().getId();
     }
 }

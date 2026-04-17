@@ -1,0 +1,157 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Title</title>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-[#f9fafb] text-gray-900" x-data="{ activeTab: 'basics' }">
+
+<nav class="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center sticky top-0 z-10">
+    <div class="flex items-center gap-4">
+        <a th:href="@{'/events/' + ${user.id}}" class="text-gray-400 hover:text-gray-600">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1 class="font-bold text-lg flex items-center gap-2">
+            <span th:text="${event.title}">meeting</span>
+        </h1>
+    </div>
+    <div class="flex items-center gap-3">
+        <button class="bg-white border border-gray-200 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </button>
+
+<!--        <div class="flex justify-end">-->
+<!--            <button type="submit"-->
+<!--                    class="bg-black text-white px-4 py-2 rounded-md">-->
+<!--                Save-->
+<!--            </button>-->
+<!--        </div>-->
+    </div>
+</nav>
+
+<div class="max-w-6xl mx-auto flex gap-10 p-10">
+
+    <aside class="w-64 space-y-1">
+        <button @click="activeTab = 'basics'" :class="activeTab === 'basics' ? 'bg-gray-100 text-black' : 'text-gray-500'"
+                class="w-full flex justify-between items-center px-4 py-3 rounded-lg text-sm font-medium transition">
+            <span class="flex items-center gap-3"><i class="fa-solid fa-link w-4"></i> Basics</span>
+            <i class="fa-solid fa-chevron-right text-[10px]" x-show="activeTab === 'basics'"></i>
+        </button>
+        <button @click="activeTab = 'availability'" :class="activeTab === 'availability' ? 'bg-gray-100 text-black' : 'text-gray-500'"
+                class="w-full flex justify-between items-center px-4 py-3 rounded-lg text-sm font-medium transition">
+            <span class="flex items-center gap-3"><i class="fa-solid fa-calendar w-4"></i> Availability</span>
+        </button>
+        <button @click="activeTab = 'limits'" :class="activeTab === 'limits' ? 'bg-gray-100 text-black' : 'text-gray-500'"
+                class="w-full flex justify-between items-center px-4 py-3 rounded-lg text-sm font-medium transition">
+            <span class="flex items-center gap-3"><i class="fa-solid fa-clock w-4"></i> Limits</span>
+        </button>
+    </aside>
+
+    <div class="flex-1 bg-white border border-gray-200 rounded-xl shadow-sm p-8">
+
+        <div x-show="activeTab === 'basics'" x-cloak>
+<!--            <form class="space-y-8">-->
+                <form th:action="@{'/events/update/' + ${event.id}}"
+                      th:object="${event}"
+                      method="post"
+                      class="space-y-8">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Title</label>
+                    <input type="text" th:field="*{title}" class="w-full p-2 border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:ring-1 focus:ring-black outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Description</label>
+                    <div class="border border-gray-200 rounded-md overflow-hidden">
+                        <div class="bg-gray-50 p-2 border-b border-gray-100 flex gap-4 text-gray-400 text-xs">
+                            <i class="fa-solid fa-bold cursor-pointer hover:text-black"></i>
+                            <i class="fa-solid fa-italic cursor-pointer hover:text-black"></i>
+                            <i class="fa-solid fa-link cursor-pointer hover:text-black"></i>
+                        </div>
+                        <textarea th:field="*{description}" rows="3" class="w-full p-4 text-sm outline-none focus:bg-white" placeholder="A quick video meeting."></textarea>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2">URL</label>
+                    <div class="flex items-center border border-gray-200 rounded-md bg-gray-50 px-3">
+                        <span class="text-gray-400 text-sm" th:text="'cal.com/' + ${user.username} + '/'"></span>
+                        <input type="text" th:field="*{slug}" class="flex-1 p-2 bg-transparent outline-none text-sm">
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <div class="flex justify-between items-center">
+                    <div>
+                        <label class="block text-sm font-semibold">Duration</label>
+                        <div class="flex items-center gap-2 mt-2">
+                            <input type="number" th:field="*{duration}" class="w-20 p-2 border border-gray-200 rounded-md text-sm">
+                            <span class="text-sm text-gray-500">minutes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <label class="block text-sm font-semibold mb-2">Location</label>
+                    <select class="w-full p-2 border border-gray-200 rounded-md bg-gray-50 text-sm outline-none">
+                        <option>Cal Video (Default)</option>
+                        <option>Google Meet</option>
+                        <option>Phone Call</option>
+                    </select>
+                </div>
+                    <div class="flex justify-end">
+                        <button type="submit"
+                                class="bg-black text-white px-4 py-2 rounded-md">
+                            Save
+                        </button>
+                    </div>
+            </form>
+        </div>
+
+        <div x-show="activeTab === 'availability'" x-cloak>
+            <h3 class="font-bold text-lg mb-4">Availability Settings</h3>
+            <p class="text-gray-500 text-sm">Configure your working hours for this event type.</p>
+            <div class="mt-6 p-10 border-2 border-dashed border-gray-100 rounded-lg text-center text-gray-400">
+                Availability components go here...
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const titleInput = document.querySelector('input[name="title"]');
+        const slugInput = document.querySelector('input[name="slug"]');
+
+        if(titleInput && slugInput){
+            titleInput.addEventListener('input', function () {
+                let slug = this.value
+                    .toLowerCase()
+                    .trim()
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\w-]+/g, '');
+
+                slugInput.value = slug;
+            });
+        }
+
+    });
+</script>
+</body>
+</html>

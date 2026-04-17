@@ -38,6 +38,7 @@ public class UserController {
     @PostMapping("/create")
     public String createUser(@ModelAttribute User user) {
         userService.save(user);
-        return "redirect:/u/" + user.getUsername();
+        return "redirect:/events/" + user.getId();
+//        return "redirect:/u/" + user.getUsername();
     }
 }

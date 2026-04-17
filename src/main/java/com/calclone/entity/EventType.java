@@ -25,6 +25,8 @@ public class EventType {
     private User user;
 
     private boolean active = true;
+
+    private String location = "Cal Video (Default)";
 }
 
 
