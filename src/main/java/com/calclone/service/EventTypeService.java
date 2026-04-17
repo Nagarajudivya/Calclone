@@ -31,6 +31,11 @@ public class EventTypeService {
     public void delete(Long id) {
         repository.deleteById(id);
     }
+
+    public EventType findByUsernameAndSlug(String username, String slug) {
+        return repository.findByUserUsernameAndSlug(username, slug)
+                .orElseThrow(() -> new RuntimeException("Event not found for user: " + username + " with slug: " + slug));
+    }
 }
 
 

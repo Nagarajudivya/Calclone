@@ -23,9 +23,9 @@
             <a href="#" class="flex items-center gap-3 px-4 py-2 bg-gray-100 rounded-md font-medium text-gray-900">
                 <i class="fa-solid fa-link"></i> Event types
             </a>
-<!--            <a href="#" class="flex items-center gap-3 px-4 py-2 text-gray-500 hover:bg-gray-50 rounded-md">-->
-<!--                <i class="fa-solid fa-calendar"></i> Bookings-->
-<!--            </a>-->
+            <a href="#" class="flex items-center gap-3 px-4 py-2 text-gray-500 hover:bg-gray-50 rounded-md">
+                <i class="fa-solid fa-calendar"></i> Bookings
+            </a>
         </nav>
     </aside>
 
@@ -94,12 +94,17 @@
                         </form>
 
                         <div class="flex items-center gap-1">
-                            <button class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">
+                            <a th:href="@{'/book/' + ${user.username} + '/' + ${event.slug}}"
+                               target="_blank"
+                               class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">
                                 <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
-                            </button>
-                            <button class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">
-                                <i class="fa-solid fa-link text-xs"></i>
-                            </button>
+                            </a>
+<!--                            <button class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">-->
+<!--                                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>-->
+<!--                            </button>-->
+<!--                            <button class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">-->
+<!--                                <i class="fa-solid fa-link text-xs"></i>-->
+<!--                            </button>-->
 
                             <div class="relative" x-data="{ openMenu: false }">
                                 <button @click="openMenu = !openMenu" @click.away="openMenu = false"
