@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Event</title>
+</head>
+<body>
+
+<h2>Create Event</h2>
+
+<form th:action="@{'/events/create/' + ${userId}}" method="post" th:object="${event}">
+
+    Title: <input type="text" th:field="*{title}" /><br>
+    Slug: <input type="text" th:field="*{slug}" /><br>
+    Duration: <input type="number" th:field="*{duration}" /><br>
+
+    <button type="submit">Save</button>
+
+</form>
+
+</body>
+</html>
