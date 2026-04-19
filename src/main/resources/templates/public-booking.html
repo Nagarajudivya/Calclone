@@ -1,244 +1,427 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title th:text="${event.title} + ' | Cal Clone'"></title>-->
+<!--    <script src="https://cdn.tailwindcss.com"></script>-->
+<!--    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>-->
+<!--    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">-->
+<!--    <style>[x-cloak] { display: none !important; }</style>-->
+<!--</head>-->
+<!--<body class="bg-[#f3f4f6] min-h-screen flex items-center justify-center p-4">-->
+
+<!--<div id="booking-container" x-data="{ step: 'calendar', selectedTime: '' }" class="w-full max-w-5xl">-->
+
+<!--    <div x-show="step === 'calendar'" class="bg-white rounded-xl shadow-xl overflow-hidden flex flex-col md:flex-row border border-gray-200">-->
+
+<!--        <div class="w-full md:w-1/3 p-8 border-r border-gray-100">-->
+<!--            <div class="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-white font-bold mb-4"-->
+<!--                 th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}"></div>-->
+<!--            <p class="text-gray-500 font-medium text-sm mb-1" th:text="${user.username}"></p>-->
+<!--            <h1 class="text-2xl font-bold text-gray-900 mb-4" th:text="${event.title}"></h1>-->
+<!--            <div class="space-y-3 text-gray-600">-->
+<!--                <div class="flex items-center gap-3"><i class="fa-regular fa-clock w-5 text-gray-400"></i><span th:text="${event.duration} + 'm'"></span></div>-->
+<!--                <div class="flex items-center gap-3"><i class="fa-solid fa-video w-5 text-gray-400"></i><span>Cal Video</span></div>-->
+<!--            </div>-->
+<!--            <p class="mt-6 text-gray-500 text-sm" th:text="${event.description}"></p>-->
+<!--        </div>-->
+
+<!--        <div class="w-full md:w-1/3 p-8 border-r border-gray-100 bg-white">-->
+<!--            <div class="flex justify-between items-center mb-6">-->
+<!--                <h2 id="monthDisplay" class="font-bold text-gray-900"></h2>-->
+<!--                <div class="flex gap-4">-->
+<!--                    <button id="prevMonth" class="text-gray-400 hover:text-black"><i class="fa-solid fa-chevron-left"></i></button>-->
+<!--                    <button id="nextMonth" class="text-gray-400 hover:text-black"><i class="fa-solid fa-chevron-right"></i></button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--            <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 uppercase mb-4">-->
+<!--                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>-->
+<!--            </div>-->
+<!--            <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>-->
+<!--        </div>-->
+
+<!--        <div class="w-full md:w-1/3 p-8 bg-white overflow-y-auto max-h-[500px]">-->
+<!--            <h2 class="font-bold text-gray-900 mb-6">-->
+<!--                <span id="selectedDay">Select</span> <span id="selectedDate" class="text-gray-400 font-normal">Date</span>-->
+<!--            </h2>-->
+<!--            <div id="timeSlots" class="space-y-2">-->
+<!--                <p class="text-gray-400 text-sm text-center py-10">Select a date to see available slots</p>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <div x-show="step === 'form'" x-cloak class="bg-white rounded-xl shadow-xl flex flex-col md:flex-row max-w-3xl mx-auto border border-gray-200">-->
+<!--        <div class="w-full md:w-1/3 p-8 border-r border-gray-100 bg-white">-->
+<!--            <button @click="step = 'calendar'" class="text-gray-400 hover:text-black mb-4"><i class="fa-solid fa-arrow-left"></i></button>-->
+<!--            <div class="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-white font-bold mb-4"-->
+<!--                 th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}"></div>-->
+<!--            <h2 class="text-xl font-bold" th:text="${event.title}"></h2>-->
+<!--            <div class="mt-4 space-y-3 text-gray-600 text-sm">-->
+<!--                <p class="flex items-center gap-2 font-medium"><i class="fa-regular fa-calendar text-gray-400"></i> <span id="summary-date"></span></p>-->
+<!--                <p class="flex items-center gap-2 font-medium"><i class="fa-regular fa-clock text-gray-400"></i> <span x-text="selectedTime"></span></p>-->
+<!--                <p class="flex items-center gap-2 text-gray-400"><i class="fa-solid fa-globe"></i> Asia/Kolkata</p>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="flex-1 p-8">-->
+<!--            <form th:action="@{/book/confirm}" method="POST" class="space-y-4">-->
+<!--                <input type="hidden" name="eventTypeId" th:value="${event.id}">-->
+<!--                <input type="hidden" name="startTime" :value="selectedTime">-->
+<!--                <input type="hidden" id="hiddenDate" name="date">-->
+
+<!--                <div>-->
+<!--                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Your name *</label>-->
+<!--                    <input type="text" name="guestName" required placeholder="John Doe"-->
+<!--                           class="w-full p-2.5 border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:ring-1 focus:ring-black outline-none transition">-->
+<!--                </div>-->
+<!--                <div>-->
+<!--                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Email address *</label>-->
+<!--                    <input type="email" name="guestEmail" required placeholder="you@example.com"-->
+<!--                           class="w-full p-2.5 border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:ring-1 focus:ring-black outline-none transition">-->
+<!--                </div>-->
+<!--                <div>-->
+<!--                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Additional notes</label>-->
+<!--                    <textarea name="notes" rows="3" placeholder="Please share anything that will help prepare for our meeting."-->
+<!--                              class="w-full p-2.5 border border-gray-200 rounded-md bg-gray-50 focus:bg-white focus:ring-1 focus:ring-black outline-none transition"></textarea>-->
+<!--                </div>-->
+
+<!--                <div class="flex justify-end gap-3 pt-4 border-t border-gray-50 mt-6">-->
+<!--                    <button type="button" @click="step = 'calendar'" class="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-md">Cancel</button>-->
+<!--                    <button type="submit" class="px-6 py-2 bg-black text-white text-sm font-bold rounded-md hover:bg-zinc-800 transition">Confirm Booking</button>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    document.addEventListener("DOMContentLoaded", function () {-->
+<!--        const calendar = document.getElementById("calendarDays");-->
+<!--        const timeSlots = document.getElementById("timeSlots");-->
+<!--        const prevBtn = document.getElementById("prevMonth");-->
+<!--        const nextBtn = document.getElementById("nextMonth");-->
+<!--        const selectedDayEl = document.getElementById("selectedDay");-->
+<!--        const selectedDateEl = document.getElementById("selectedDate");-->
+<!--        const monthTitle = document.getElementById("monthDisplay");-->
+
+<!--        const today = new Date();-->
+<!--        let currentMonth = today.getMonth();-->
+<!--        let currentYear = today.getFullYear();-->
+<!--        const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];-->
+
+<!--        function renderCalendar() {-->
+<!--            calendar.innerHTML = "";-->
+<!--            monthTitle.innerHTML = months[currentMonth] + " <span class='text-gray-400 font-normal'>" + currentYear + "</span>";-->
+
+<!--            let firstDay = new Date(currentYear, currentMonth, 1).getDay();-->
+<!--            let totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();-->
+
+<!--            for (let i = 0; i < firstDay; i++) {-->
+<!--                calendar.appendChild(document.createElement("div"));-->
+<!--            }-->
+
+<!--            for (let day = 1; day <= totalDays; day++) {-->
+<!--                let date = new Date(currentYear, currentMonth, day);-->
+<!--                let btn = document.createElement("button");-->
+<!--                btn.innerText = day;-->
+<!--                btn.className = "h-10 text-sm rounded-md font-medium transition";-->
+
+<!--                let isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());-->
+<!--                let isWeekend = date.getDay() === 0 || date.getDay() === 6;-->
+
+<!--                if (isPast || isWeekend) {-->
+<!--                    btn.classList.add("text-gray-300", "cursor-not-allowed");-->
+<!--                    btn.disabled = true;-->
+<!--                } else {-->
+<!--                    btn.classList.add("hover:bg-gray-100", "text-gray-700");-->
+<!--                    btn.onclick = () => selectDate(date, btn);-->
+<!--                }-->
+<!--                calendar.appendChild(btn);-->
+<!--            }-->
+<!--            prevBtn.disabled = (currentMonth === today.getMonth() && currentYear === today.getFullYear());-->
+<!--            prevBtn.style.opacity = prevBtn.disabled ? "0.3" : "1";-->
+<!--        }-->
+
+<!--        function selectDate(date, btn) {-->
+<!--            document.querySelectorAll("#calendarDays button").forEach(b => b.classList.remove("bg-black", "text-white"));-->
+<!--            btn.classList.add("bg-black", "text-white");-->
+<!--            const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];-->
+<!--            selectedDayEl.innerText = days[date.getDay()];-->
+<!--            selectedDateEl.innerText = date.getDate();-->
+<!--            generateTimeSlots();-->
+<!--        }-->
+
+<!--        function generateTimeSlots() {-->
+<!--            timeSlots.innerHTML = "";-->
+<!--            for (let i = 540; i < 1080; i += 15) { // 9 AM to 6 PM-->
+<!--                let hour = Math.floor(i / 60);-->
+<!--                let min = i % 60;-->
+<!--                let ampm = hour >= 12 ? "pm" : "am";-->
+<!--                let displayHour = hour > 12 ? hour - 12 : hour;-->
+<!--                let time = displayHour + ":" + (min === 0 ? "00" : min) + ampm;-->
+
+<!--                let btn = document.createElement("button");-->
+<!--                btn.innerText = time;-->
+<!--                btn.className = "w-full py-3 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:border-black hover:bg-gray-50 transition";-->
+<!--                btn.onclick = () => selectTime(time);-->
+<!--                timeSlots.appendChild(btn);-->
+<!--            }-->
+<!--        }-->
+
+<!--        window.selectTime = function(timeString) {-->
+<!--            const container = document.getElementById('booking-container');-->
+<!--            const alpineData = Alpine.$data(container);-->
+
+<!--            const monthNum = String(currentMonth + 1).padStart(2, '0');-->
+<!--            const dayNum = String(selectedDateEl.innerText).padStart(2, '0');-->
+<!--            document.getElementById('hiddenDate').value = `${currentYear}-${monthNum}-${dayNum}`;-->
+
+<!--            const daysFull = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];-->
+<!--            const d = new Date(currentYear, currentMonth, selectedDateEl.innerText);-->
+<!--            document.getElementById('summary-date').innerText = `${daysFull[d.getDay()]}, ${months[currentMonth]} ${selectedDateEl.innerText}`;-->
+
+<!--            alpineData.selectedTime = timeString;-->
+<!--            alpineData.step = 'form';-->
+<!--        };-->
+
+<!--        nextBtn.onclick = () => { currentMonth++; if(currentMonth > 11){ currentMonth=0; currentYear++; } renderCalendar(); };-->
+<!--        prevBtn.onclick = () => { if(prevBtn.disabled) return; currentMonth&#45;&#45;; if(currentMonth < 0){ currentMonth=11; currentYear&#45;&#45;; } renderCalendar(); };-->
+<!--        renderCalendar();-->
+<!--    });-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title th:text="${event.title} + ' | Cal Clone'"></title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title th:text="${event.title} + ' | Cal Clone'"></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        /* Style to match Image 2's specific active state */
+        .calendar-btn-active {
+            background-color: #111827 !important;
+            color: white !important;
+            font-weight: 700;
+        }
+    </style>
 </head>
 <body class="bg-[#f3f4f6] min-h-screen flex items-center justify-center p-4">
 
-<div class="bg-white rounded-xl shadow-xl overflow-hidden flex flex-col md:flex-row max-w-5xl w-full border border-gray-200">
+<div id="booking-container" x-data="{ step: 'calendar', selectedTime: '' }" class="w-full max-w-4xl">
 
-  <div class="w-full md:w-1/3 p-8 border-r border-gray-100">
-    <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold mb-4"
-         th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">U</div>
+    <div x-show="step === 'calendar'" class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row border border-gray-200 min-h-[520px]">
 
-    <p class="text-gray-500 font-medium text-sm mb-1" th:text="${user.username}"></p>
-    <h1 class="text-2xl font-bold text-gray-900 mb-4" th:text="${event.title}">Meeting</h1>
+        <div class="w-full md:w-[35%] p-8 border-r border-gray-100">
+            <div class="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-white font-bold mb-6"
+                 th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}"></div>
 
-    <div class="space-y-3 text-gray-600">
-      <div class="flex items-center gap-3">
-        <i class="fa-regular fa-clock w-5 text-gray-400"></i>
-        <span th:text="${event.duration} + 'm'">15m</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-video w-5 text-gray-400"></i>
-        <span>Cal Video</span>
-      </div>
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-globe w-5 text-gray-400"></i>
-        <span class="text-sm">Asia/Kolkata <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i></span>
-      </div>
+            <p class="text-gray-400 font-bold text-sm mb-1" th:text="${user.username}"></p>
+            <h1 class="text-2xl font-bold text-gray-900 mb-6" th:text="${event.title}"></h1>
+
+            <div class="space-y-4 text-gray-500 font-medium">
+                <div class="flex items-center gap-3">
+                    <i class="fa-regular fa-clock w-5"></i>
+                    <span th:text="${event.duration} + 'm'"></span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-video w-5"></i>
+                    <span>Cal Video</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-gray-400 font-bold">
+                    <i class="fa-solid fa-globe w-5"></i>
+                    <span>Asia/Kolkata <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i></span>
+                </div>
+            </div>
+
+            <p class="mt-8 text-gray-400 text-sm leading-relaxed" th:text="${event.description}"></p>
+        </div>
+
+        <div class="w-full md:w-[40%] p-8 border-r border-gray-100 bg-white">
+            <div class="flex justify-between items-center mb-8">
+                <h2 id="monthDisplay" class="text-lg font-bold text-gray-900"></h2>
+                <div class="flex gap-2">
+                    <button id="prevMonth" class="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition">
+                        <i class="fa-solid fa-chevron-left text-sm"></i>
+                    </button>
+                    <button id="nextMonth" class="p-2 text-gray-400 hover:text-black hover:bg-gray-100 rounded-full transition">
+                        <i class="fa-solid fa-chevron-right text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-gray-400 uppercase mb-4">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
+        </div>
+
+        <div class="w-full md:w-[25%] p-8 bg-white overflow-y-auto max-h-[520px]">
+            <h2 class="font-bold text-gray-900 mb-6">
+                <span id="selectedDay">Select</span> <span id="selectedDate" class="text-gray-400 font-normal"></span>
+            </h2>
+            <div id="timeSlots" class="space-y-2">
+                <div class="flex flex-col items-center justify-center h-full text-center py-20 text-gray-400 text-sm">
+                    <p>Select a date to see available slots</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <p class="mt-6 text-gray-500 text-sm leading-relaxed" th:text="${event.description}">
-      Quick meeting description.
-    </p>
-  </div>
+    <div x-show="step === 'form'" x-cloak class="bg-white rounded-xl shadow-sm flex flex-col md:flex-row max-w-3xl mx-auto border border-gray-200 overflow-hidden">
 
-  <div class="w-full md:w-1/3 p-8 border-r border-gray-100 bg-white">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="font-bold text-gray-900">April <span class="text-gray-400 font-normal">2026</span></h2>
-      <div class="flex gap-4">
-        <button id="prevMonth" class="text-gray-400 hover:text-black">
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
+        <div class="w-full md:w-1/3 p-8 border-r border-gray-100 bg-white">
+            <button @click="step = 'calendar'" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 rounded-full mb-6">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="w-10 h-10 bg-zinc-900 rounded-full flex items-center justify-center text-white font-bold mb-4"
+                 th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}"></div>
+            <h2 class="text-xl font-bold text-gray-900" th:text="${event.title}"></h2>
 
-        <button id="nextMonth" class="text-gray-400 hover:text-black">
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-      </div>
+            <div class="mt-6 space-y-4 text-gray-500 text-sm font-medium">
+                <p class="flex items-center gap-3"><i class="fa-regular fa-calendar text-gray-400"></i> <span id="summary-date"></span></p>
+                <p class="flex items-center gap-3"><i class="fa-regular fa-clock text-gray-400"></i> <span x-text="selectedTime"></span></p>
+                <p class="flex items-center gap-3"><i class="fa-solid fa-globe text-gray-400"></i> Asia/Kolkata</p>
+            </div>
+        </div>
+
+        <div class="flex-1 p-8">
+            <form th:action="@{/book/confirm}" method="POST" class="space-y-5">
+                <input type="hidden" name="eventTypeId" th:value="${event.id}">
+                <input type="hidden" name="startTime" :value="selectedTime">
+                <input type="hidden" id="hiddenDate" name="date">
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Your name *</label>
+                    <input type="text" name="guestName" required
+                           th:value="${loggedInUser != null ? loggedInUser.username : ''}"
+                           placeholder="Enter your name"
+                           class="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-1 focus:ring-black outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Email address *</label>
+                    <input type="email" name="guestEmail" required
+                           th:value="${loggedInUser != null ? loggedInUser.email : ''}"
+                           placeholder="you@example.com"
+                           class="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-1 focus:ring-black outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Additional notes</label>
+                    <textarea name="notes" rows="3" placeholder="Please share anything that will help prepare..."
+                              class="w-full p-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-1 focus:ring-black outline-none transition"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-50 mt-4">
+                    <button type="button" @click="step = 'calendar'" class="px-4 py-2 text-sm font-bold text-gray-600 hover:bg-gray-100 rounded-lg transition">Back</button>
+                    <button type="submit" class="px-6 py-2 bg-black text-white text-sm font-bold rounded-lg hover:bg-zinc-800 transition">Confirm Booking</button>
+                </div>
+            </form>
+        </div>
     </div>
-
-    <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 uppercase mb-4">
-      <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-    </div>
-    <div id="calendarDays" class="grid grid-cols-7 gap-1"></div>
-  </div>
-
-  <div class="w-full md:w-1/3 p-8 bg-white overflow-y-auto max-h-[600px]">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="font-bold text-gray-900">
-        <span id="selectedDay">Mon</span>
-        <span id="selectedDate" class="text-gray-400 font-normal">20</span>
-      </h2>
-      <div class="flex bg-gray-100 rounded-md p-1">
-        <button class="text-[10px] px-2 py-0.5 bg-white shadow-sm rounded font-bold">12h</button>
-        <button class="text-[10px] px-2 py-0.5 text-gray-500">24h</button>
-      </div>
-    </div>
-
-    <div id="timeSlots" class="space-y-2"></div>
-  </div>
-</div>
-
-<div class="fixed bottom-6 text-gray-400 text-sm font-medium">
-  Cal.com
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
+        const calendar = document.getElementById("calendarDays");
+        const timeSlots = document.getElementById("timeSlots");
+        const prevBtn = document.getElementById("prevMonth");
+        const nextBtn = document.getElementById("nextMonth");
+        const selectedDayEl = document.getElementById("selectedDay");
+        const selectedDateEl = document.getElementById("selectedDate");
+        const monthTitle = document.getElementById("monthDisplay");
 
-      const calendar = document.getElementById("calendarDays");
-      const timeSlots = document.getElementById("timeSlots");
+        const today = new Date();
+        let currentMonth = today.getMonth();
+        let currentYear = today.getFullYear();
+        const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-      const prevBtn = document.getElementById("prevMonth");
-      const nextBtn = document.getElementById("nextMonth");
+        function renderCalendar() {
+            calendar.innerHTML = "";
+            monthTitle.innerHTML = months[currentMonth] + " <span class='text-gray-400 font-normal'>" + currentYear + "</span>";
 
-      const selectedDayEl = document.getElementById("selectedDay");
-const selectedDateEl = document.getElementById("selectedDate");
+            let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            let totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-      const today = new Date();
+            for (let i = 0; i < firstDay; i++) {
+                calendar.appendChild(document.createElement("div"));
+            }
 
-      let currentMonth = today.getMonth();
-      let currentYear = today.getFullYear();
+            for (let day = 1; day <= totalDays; day++) {
+                let date = new Date(currentYear, currentMonth, day);
+                let btn = document.createElement("button");
+                btn.innerText = day;
+                btn.className = "h-10 w-10 text-sm rounded-lg font-semibold transition mx-auto flex items-center justify-center";
 
+                let isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                let isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
-      const months = ["January","February","March","April","May","June",
-                      "July","August","September","October","November","December"];
+                if (isPast || isWeekend) {
+                    btn.classList.add("text-gray-300", "cursor-not-allowed");
+                    btn.disabled = true;
+                } else {
+                    btn.classList.add("text-gray-700", "hover:bg-zinc-100");
+                    btn.onclick = () => selectDate(date, btn);
+                }
+                calendar.appendChild(btn);
+            }
+            prevBtn.disabled = (currentMonth === today.getMonth() && currentYear === today.getFullYear());
+            prevBtn.style.opacity = prevBtn.disabled ? "0.3" : "1";
+        }
 
-      const monthTitle = document.querySelector("h2");
+        function selectDate(date, btn) {
+            document.querySelectorAll("#calendarDays button").forEach(b => b.classList.remove("calendar-btn-active"));
+            btn.classList.add("calendar-btn-active");
 
+            const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+            selectedDayEl.innerText = days[date.getDay()];
+            selectedDateEl.innerText = date.getDate();
+            generateTimeSlots();
+        }
 
-      function renderCalendar() {
+        function generateTimeSlots() {
+            timeSlots.innerHTML = "";
+            for (let i = 540; i < 1080; i += 30) { // Incremented to 30m slots for cleaner look
+                let hour = Math.floor(i / 60);
+                let min = i % 60;
+                let ampm = hour >= 12 ? "pm" : "am";
+                let displayHour = hour > 12 ? hour - 12 : hour;
+                let time = displayHour + ":" + (min === 0 ? "00" : min) + ampm;
 
-          calendar.innerHTML = "";
+                let btn = document.createElement("button");
+                btn.innerText = time;
+                btn.className = "w-full py-3 border border-gray-100 rounded-lg text-sm font-bold text-gray-700 hover:border-black hover:bg-gray-50 transition";
+                btn.onclick = () => selectTime(time);
+                timeSlots.appendChild(btn);
+            }
+        }
 
-          monthTitle.innerHTML = months[currentMonth] + " <span class='text-gray-400 font-normal'>" + currentYear + "</span>";
+        window.selectTime = function(timeString) {
+            const container = document.getElementById('booking-container');
+            const alpineData = Alpine.$data(container);
 
-          let firstDay = new Date(currentYear, currentMonth, 1).getDay();
-          let totalDays = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const monthNum = String(currentMonth + 1).padStart(2, '0');
+            const dayNum = String(selectedDateEl.innerText).padStart(2, '0');
+            document.getElementById('hiddenDate').value = `${currentYear}-${monthNum}-${dayNum}`;
 
-          for (let i = 0; i < firstDay; i++) {
-              let empty = document.createElement("div");
-              calendar.appendChild(empty);
-          }
+            const daysFull = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+            const d = new Date(currentYear, currentMonth, selectedDateEl.innerText);
+            document.getElementById('summary-date').innerText = `${daysFull[d.getDay()]}, ${months[currentMonth]} ${selectedDateEl.innerText}`;
 
-          for (let day = 1; day <= totalDays; day++) {
+            alpineData.selectedTime = timeString;
+            alpineData.step = 'form';
+        };
 
-              let date = new Date(currentYear, currentMonth, day);
-              let btn = document.createElement("button");
-
-              btn.innerText = day;
-              btn.className = "h-10 text-sm rounded-md";
-
-              let isPast =
-                  date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-              let isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
-              if (isPast || isWeekend) {
-                  btn.classList.add("text-gray-300", "cursor-not-allowed");
-                  btn.disabled = true;
-              } else {
-                  btn.classList.add("hover:bg-gray-100");
-
-                  btn.onclick = function () {
-                      selectDate(date, btn);
-                  };
-              }
-
-              calendar.appendChild(btn);
-          }
-
-          // 🔹 Disable back button if current month = today month
-          if (currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
-              prevBtn.classList.add("opacity-30", "cursor-not-allowed");
-              prevBtn.disabled = true;
-          } else {
-              prevBtn.classList.remove("opacity-30");
-              prevBtn.disabled = false;
-          }
-      }
-
-      // 🔹 Select Date
-    function selectDate(date, btn) {
-
-    document.querySelectorAll("#calendarDays button")
-        .forEach(b => b.classList.remove("bg-black", "text-white"));
-
-    btn.classList.add("bg-black", "text-white");
-
-    // 🔹 Update Day & Date dynamically
-    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
-    selectedDayEl.innerText = days[date.getDay()];
-    selectedDateEl.innerText = date.getDate();
-
-    // Generate slots
-    generateTimeSlots();
-}
-
-      function generateTimeSlots() {
-
-          timeSlots.innerHTML = "";
-
-          let start = 9 * 60;
-          let end = 18 * 60;
-
-          for (let i = start; i < end; i += 15) {
-
-              let hour = Math.floor(i / 60);
-              let min = i % 60;
-
-              let ampm = hour >= 12 ? "PM" : "AM";
-              let displayHour = hour > 12 ? hour - 12 : hour;
-
-              let time = displayHour + ":" + (min === 0 ? "00" : min) + " " + ampm;
-
-              let btn = document.createElement("button");
-
-              btn.innerText = time;
-
-              btn.className =
-                  "w-full py-3 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:border-black hover:bg-gray-50";
-
-              btn.onclick = function () {
-                  selectTime(btn);
-              };
-
-              timeSlots.appendChild(btn);
-          }
-      }
-
-      // 🔹 Select Time
-      function selectTime(btn) {
-
-          document.querySelectorAll("#timeSlots button")
-              .forEach(b => b.classList.remove("bg-black", "text-white"));
-
-          btn.classList.add("bg-black", "text-white");
-      }
-
-      // 🔹 Next Month
-      nextBtn.onclick = function () {
-          currentMonth++;
-          if (currentMonth > 11) {
-              currentMonth = 0;
-              currentYear++;
-          }
-          renderCalendar();
-      };
-
-      // 🔹 Previous Month (restricted)
-      prevBtn.onclick = function () {
-          if (
-              currentMonth === today.getMonth() &&
-              currentYear === today.getFullYear()
-          ) return;
-
-          currentMonth--;
-          if (currentMonth < 0) {
-              currentMonth = 11;
-              currentYear--;
-          }
-          renderCalendar();
-      };
-
-      renderCalendar();
-  });
+        nextBtn.onclick = () => { currentMonth++; if(currentMonth > 11){ currentMonth=0; currentYear++; } renderCalendar(); };
+        prevBtn.onclick = () => { if(prevBtn.disabled) return; currentMonth--; if(currentMonth < 0){ currentMonth=11; currentYear--; } renderCalendar(); };
+        renderCalendar();
+    });
 </script>
-
 </body>
 </html>

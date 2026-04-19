@@ -31,7 +31,9 @@ public class EventTypeController {
     public String saveEvent(@PathVariable Long userId,
                             @ModelAttribute EventType eventType) {
 
-        User user = userService.getById(userId);
+//        User user = userService.getById(userId);
+        User user = userService.getById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         eventType.setUser(user);
 
         eventTypeService.save(eventType);
@@ -41,7 +43,9 @@ public class EventTypeController {
 
     @GetMapping("/{userId}")
     public String listEvents(@PathVariable Long userId, Model model) {
-        User user = userService.getById(userId);
+//        User user = userService.getById(userId);
+        User user = userService.getById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         model.addAttribute("events", eventTypeService.getByUser(userId));
         model.addAttribute("user", user);
         model.addAttribute("userId", userId);
