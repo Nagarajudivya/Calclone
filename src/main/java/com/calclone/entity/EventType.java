@@ -5,6 +5,9 @@ import lombok.Data;
 
 @Entity
 @Data
+@Table(name = "event_type", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "slug"})
+})
 public class EventType {
 
     @Id
@@ -13,7 +16,6 @@ public class EventType {
 
     private String title;
 
-    @Column(unique = true)
     private String slug;
 
     private String description;

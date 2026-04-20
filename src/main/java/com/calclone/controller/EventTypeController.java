@@ -2,22 +2,41 @@ package com.calclone.controller;
 
 import com.calclone.entity.EventType;
 import com.calclone.entity.User;
+import com.calclone.repository.UserRepository;
 import com.calclone.service.EventTypeService;
 import com.calclone.service.UserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
 @Controller
 @RequestMapping("/events")
 public class EventTypeController {
 
     private final EventTypeService eventTypeService;
     private final UserService userService;
+    private final UserRepository userRepository;
 
-    public EventTypeController(EventTypeService eventTypeService, UserService userService){
+    public EventTypeController(EventTypeService eventTypeService, UserService userService, UserRepository userRepository){
         this.eventTypeService = eventTypeService;
         this.userService = userService;
+        this.userRepository = userRepository;
+    }
+
+    @GetMapping({"", "/"})
+    public String events(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName(); // always the email for form login
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        model.addAttribute("user", user);
+        model.addAttribute("events", eventTypeService.getByUser(user.getId()));
+        return "events";
     }
 
     @GetMapping("/create/{userId}")
@@ -29,16 +48,25 @@ public class EventTypeController {
 
     @PostMapping("/create/{userId}")
     public String saveEvent(@PathVariable Long userId,
-                            @ModelAttribute EventType eventType) {
+                            @ModelAttribute EventType eventType,
+                            Model model) {
 
-//        User user = userService.getById(userId);
         User user = userService.getById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+
+        if (eventTypeService.existsByUserIdAndSlug(userId, eventType.getSlug())) {
+            String baseSlug = eventType.getSlug();
+            int suffix = 1;
+            while (eventTypeService.existsByUserIdAndSlug(userId, baseSlug + "-" + suffix)) {
+                suffix++;
+            }
+            eventType.setSlug(baseSlug + "-" + suffix);
+        }
+
         eventType.setUser(user);
-
         eventTypeService.save(eventType);
-
-        return "redirect:/events/" + userId;
+        return "redirect:/events";
     }
 
     @GetMapping("/{userId}")
@@ -56,16 +84,17 @@ public class EventTypeController {
     @GetMapping("/delete/{id}/{userId}")
     public String delete(@PathVariable Long id, @PathVariable Long userId) {
         eventTypeService.delete(id);
-        return "redirect:/events/" + userId;
+        return "redirect:/events/";
     }
 
 
-    @GetMapping("/{username}/{slug}")
-    public String publicBookingPage(@PathVariable String username, @PathVariable String slug, Model model) {
+
+    @GetMapping("/book/{username}/{slug}")
+    public String publicBookingPage(@PathVariable String username,
+                                    @PathVariable String slug, Model model) {
         User user = userService.getByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Find specific event for this user
         EventType event = eventTypeService.getByUser(user.getId()).stream()
                 .filter(e -> e.getSlug().equals(slug))
                 .findFirst()
@@ -73,6 +102,17 @@ public class EventTypeController {
 
         model.addAttribute("user", user);
         model.addAttribute("event", event);
+
+        // Autofill for logged-in user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()
+                && !(auth.getPrincipal() instanceof String)) {
+            userRepository.findByEmail(auth.getName()).ifPresent(loggedInUser -> {
+                model.addAttribute("loggedInName", loggedInUser.getUsername());
+                model.addAttribute("loggedInEmail", loggedInUser.getEmail());
+            });
+        }
+
         return "public-booking";
     }
 
@@ -81,7 +121,7 @@ public class EventTypeController {
         EventType event = eventTypeService.getById(id);
         event.setActive(!event.isActive());
         eventTypeService.save(event);
-        return "redirect:/events/" + event.getUser().getId();
+        return "redirect:/events/";
     }
 
     @GetMapping("/edit/{id}")
@@ -105,7 +145,7 @@ public class EventTypeController {
 
         eventTypeService.save(event);
 
-        return "redirect:/events/" + event.getUser().getId();
+        return "redirect:/events/";
     }
 
     @GetMapping("/duplicate/{id}")
@@ -122,6 +162,6 @@ public class EventTypeController {
 
         eventTypeService.save(copy);
 
-        return "redirect:/events/" + event.getUser().getId();
+        return "redirect:/events/";
     }
 }

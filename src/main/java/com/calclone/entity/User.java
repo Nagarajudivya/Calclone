@@ -21,4 +21,13 @@ public class User {
     private String bio;
 
     private String timeZone;
+
+    private String name;
+    private String picture;
+
+    @Column(unique = true)
+    private String googleId;
+
+    @Column
+    private String password;
 }

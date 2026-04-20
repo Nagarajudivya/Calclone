@@ -36,6 +36,10 @@ public class EventTypeService {
         return repository.findByUserUsernameAndSlug(username, slug)
                 .orElseThrow(() -> new RuntimeException("Event not found for user: " + username + " with slug: " + slug));
     }
+
+    public boolean existsByUserIdAndSlug(Long userId, String slug) {
+        return repository.existsByUserIdAndSlug(userId, slug);
+    }
 }
 
 

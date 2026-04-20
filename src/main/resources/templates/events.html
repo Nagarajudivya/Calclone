@@ -46,21 +46,6 @@
                      class="border-b border-gray-100 last:border-b-0 p-4 flex justify-between items-center hover:bg-gray-50 transition"
                      th:classappend="${!event.active} ? 'bg-gray-50/50' : ''">
 
-<!--                    <div class="flex flex-col gap-0.5">-->
-<!--                        <div class="flex items-center gap-2">-->
-<!--                                <span class="font-semibold text-gray-800"-->
-<!--                                      th:text="${event.title}"-->
-<!--                                      th:classappend="${!event.active} ? 'text-gray-400' : ''">Meeting</span>-->
-<!--                            <span class="text-gray-400 text-xs font-normal" th:text="'/' + ${user.username} + '/' + ${event.slug}">/user/slug</span>-->
-<!--                        </div>-->
-<!--                        <div class="flex items-center gap-1.5 mt-1">-->
-<!--                                <span class="bg-gray-100 text-gray-600 text-[11px] px-2 py-0.5 rounded flex items-center gap-1 border border-gray-200">-->
-<!--                                    <i class="fa-regular fa-clock text-[10px]"></i>-->
-<!--                                    <span th:text="${event.duration} + 'm'">15m</span>-->
-<!--                                </span>-->
-<!--                        </div>-->
-<!--                    </div>-->
-
                     <div class="flex flex-col gap-0.5">
                         <div class="flex items-center gap-2">
                             <a th:href="@{'/events/edit/' + ${event.id}}" class="hover:underline">
@@ -94,7 +79,7 @@
                         </form>
 
                         <div class="flex items-center gap-1">
-                            <a th:href="@{'/book/' + ${user.username} + '/' + ${event.slug}}"
+                            <a th:href="@{'/events/book/' + ${user.username} + '/' + ${event.slug}}"
                                target="_blank"
                                class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">
                                 <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
@@ -205,8 +190,8 @@
             let slug = this.value
                 .toLowerCase()
                 .trim()
-                .replace(/\s+/g, '-')        // space → dash
-                .replace(/[^\w-]+/g, '');    // remove special chars
+                .replace(/\s+/g, '-')
+                .replace(/[^\w-]+/g, '');
 
             slugInput.value = slug;
         });

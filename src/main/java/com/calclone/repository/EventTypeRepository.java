@@ -12,4 +12,5 @@ public interface EventTypeRepository extends JpaRepository<EventType, Long> {
     List<EventType> findByUserId(Long userId);
 
     Optional<EventType> findByUserUsernameAndSlug(String username, String slug);
+    boolean existsByUserIdAndSlug(Long userId, String slug);
 }
