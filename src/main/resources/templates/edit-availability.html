@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Schedule | Cal Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #d1d5db;
+            border-radius: 20px;
+            transition: .2s;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            border-radius: 50%;
+            transition: .2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        input:checked + .toggle-slider { background-color: #111827; }
+        input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+        /* Time input styling */
+        input[type="time"] {
+            -webkit-appearance: none;
+            font-size: 13px;
+            padding: 6px 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: white;
+            color: #111827;
+            width: 108px;
+            cursor: pointer;
+        }
+        input[type="time"]:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.1);
+        }
+
+        .icon-btn {
+            width: 28px; height: 28px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background .15s;
+            border: none; background: none;
+        }
+        .icon-btn:hover { background: #f3f4f6; }
+        .icon-btn.delete:hover { background: #fee2e2; color: #ef4444; }
+
+        .slot-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .day-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            min-height: 60px;
+        }
+        .day-row:last-child { border-bottom: none; }
+
+        .save-btn-active {
+            background: #111827 !important;
+            color: white !important;
+            cursor: pointer !important;
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-[#f3f4f6] min-h-screen" style="font-family: 'Inter', sans-serif; padding: 32px 24px;">
+
+<div class="max-w-5xl mx-auto">
+
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <a href="/availability" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 text-gray-500 transition">
+                <i class="fa-solid fa-arrow-left text-sm"></i>
+            </a>
+            <div>
+                <div class="flex items-center gap-2">
+<!--                    <h1 class="text-lg font-semibold text-gray-900">Working hours</h1>-->
+                    <h1 th:text="${schedule.name}">Working hours</h1>
+                    <button class="text-gray-400 hover:text-gray-600 transition">
+                        <i class="fa-solid fa-pencil text-xs"></i>
+                    </button>
+                </div>
+                <p class="text-gray-500 text-sm" id="schedule-summary">Mon - Fri, 9:00 AM - 5:00 PM</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+<!--            <div class="flex items-center gap-2 text-sm text-gray-600">-->
+<!--                <span>Set as default</span>-->
+<!--                <label class="toggle-switch">-->
+<!--                    <input type="checkbox">-->
+<!--                    <span class="toggle-slider"></span>-->
+<!--                </label>-->
+<!--            </div>-->
+<!--            <div class="w-px h-5 bg-gray-200"></div>-->
+<!--            <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-red-50 text-gray-400 hover:text-red-500 transition">-->
+<!--                <i class="fa-solid fa-trash text-sm"></i>-->
+<!--            </button>-->
+            <div class="w-px h-5 bg-gray-200"></div>
+            <button form="availabilityForm" type="submit" id="save-button"
+                    class="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg font-semibold text-sm transition"
+                    disabled style="cursor:not-allowed">
+                Save
+            </button>
+        </div>
+    </div>
+
+    <div class="grid gap-6" style="grid-template-columns: 1fr 280px;">
+
+        <div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <form id="availabilityForm" action="/availability/save" method="post">
+<!--                    <form id="availabilityForm"-->
+<!--                          th:action="@{'/availability/save/' + ${schedule.id}}"-->
+<!--                          method="post">-->
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                    <div th:each="day, iterStat : ${dailySettings}"
+                         class="day-row"
+                         th:attr="data-index=${iterStat.index}">
+
+                        <div class="flex items-center gap-3 w-36 pt-1 shrink-0">
+                            <label class="toggle-switch">
+                                <input type="checkbox"
+                                       class="day-toggle"
+                                       th:name="${day.dayOfWeek + '_active'}"
+                                       th:checked="${day.active}"
+                                       th:attr="data-index=${iterStat.index}">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="font-medium text-gray-800 text-sm" th:text="${day.dayOfWeek}">Monday</span>
+                        </div>
+
+                        <div class="flex-1">
+                            <div th:id="'slots-container-' + ${iterStat.index}"
+                                 th:class="${day.active} ? 'slots-container flex flex-col gap-2' : 'slots-container hidden flex-col gap-2'"
+                                 th:attr="data-day=${day.dayOfWeek}">
+
+                                <div th:each="slot, slotStat : ${day.slots}" class="slot-row">
+                                    <input type="time"
+                                           th:name="${day.dayOfWeek + '_start[]'}"
+                                           th:value="${#temporals.format(slot.startTime, 'HH:mm')}"
+                                           class="slot-start">
+                                    <span class="text-gray-400 text-sm">–</span>
+                                    <input type="time"
+                                           th:name="${day.dayOfWeek + '_end[]'}"
+                                           th:value="${#temporals.format(slot.endTime, 'HH:mm')}"
+                                           class="slot-end">
+
+                                    <button type="button" class="add-slot icon-btn text-gray-500" title="Add slot">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                    </button>
+                                    <button type="button" class="copy-to-all icon-btn text-gray-500" title="Copy times to all active days">
+                                        <i class="fa-regular fa-copy text-xs"></i>
+                                    </button>
+                                    <button type="button" class="delete-slot icon-btn delete text-gray-400" title="Remove slot">
+                                        <i class="fa-solid fa-trash text-xs"></i>
+                                    </button>
+                                </div>
+
+                                <div th:if="${day.active and #lists.isEmpty(day.slots)}" class="slot-row">
+                                    <input type="time" th:name="${day.dayOfWeek + '_start[]'}" value="09:00" class="slot-start">
+                                    <span class="text-gray-400 text-sm">–</span>
+                                    <input type="time" th:name="${day.dayOfWeek + '_end[]'}" value="17:00" class="slot-end">
+                                    <button type="button" class="add-slot icon-btn text-gray-500"><i class="fa-solid fa-plus text-xs"></i></button>
+                                    <button type="button" class="copy-to-all icon-btn text-gray-500"><i class="fa-regular fa-copy text-xs"></i></button>
+                                    <button type="button" class="delete-slot icon-btn delete text-gray-400" style="display:none"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                            </div>
+
+                            <div th:id="'unavailable-text-' + ${iterStat.index}"
+                                 th:class="${day.active} ? 'hidden' : 'text-gray-400 text-sm italic pt-1'">
+                                Unavailable
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <label class="block text-sm font-semibold text-gray-900 mb-2">Timezone</label>
+                <div class="relative">
+                    <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 appearance-none bg-white pr-8 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition">
+                        <option th:text="${timezone}">Asia/Kolkata</option>
+                    </select>
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function createSlotRow(dayName, start, end, isFirst) {
+        const row = document.createElement("div");
+        row.className = "slot-row";
+        row.innerHTML = `
+            <input type="time" name="${dayName}_start[]" value="${start}" class="slot-start">
+            <span class="text-gray-400 text-sm">–</span>
+            <input type="time" name="${dayName}_end[]" value="${end}" class="slot-end">
+            <button type="button" class="add-slot icon-btn text-gray-500" title="Add slot">
+                <i class="fa-solid fa-plus text-xs"></i>
+            </button>
+            <button type="button" class="copy-to-all icon-btn text-gray-500" title="Copy to all active days">
+                <i class="fa-regular fa-copy text-xs"></i>
+            </button>
+            <button type="button" class="delete-slot icon-btn delete text-gray-400" title="Remove" style="display:${isFirst ? 'none' : 'flex'}">
+                <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+        `;
+        row.querySelectorAll("input[type=time]").forEach(inp => {
+            inp.addEventListener("change", enableSave);
+        });
+        return row;
+    }
+
+    function enableSave() {
+        const btn = document.getElementById("save-button");
+        btn.disabled = false;
+        btn.classList.remove("bg-gray-200", "text-gray-400");
+        btn.classList.add("bg-gray-900", "text-white");
+        btn.style.cursor = "pointer";
+    }
+
+    function addNextSlot(container, dayName) {
+        const existingRows = container.querySelectorAll(".slot-row");
+        const lastRow = existingRows[existingRows.length - 1];
+        const lastEnd = lastRow.querySelector(".slot-end").value || "17:00";
+
+        const [h, m] = lastEnd.split(":").map(Number);
+        const newEndH = Math.min(h + 1, 23);
+        const newStart = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+        const newEnd = `${String(newEndH).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+
+        const newRow = createSlotRow(dayName, newStart, newEnd, false);
+        container.appendChild(newRow);
+        refreshDeleteButtons(container);
+        enableSave();
+    }
+
+    function refreshDeleteButtons(container) {
+        const rows = container.querySelectorAll(".slot-row");
+        rows.forEach((row, i) => {
+            const delBtn = row.querySelector(".delete-slot");
+            if (delBtn) {
+                delBtn.style.display = rows.length > 1 ? "inline-flex" : "none";
+            }
+        });
+    }
+
+    function copyToAllActiveDays(sourceContainer) {
+        const sourceSlots = sourceContainer.querySelectorAll(".slot-row");
+        document.querySelectorAll(".slots-container").forEach(targetContainer => {
+            if (targetContainer === sourceContainer || targetContainer.classList.contains("hidden")) return;
+
+            const targetDay = targetContainer.dataset.day;
+            targetContainer.innerHTML = "";
+            sourceSlots.forEach((slot, i) => {
+                const start = slot.querySelector(".slot-start").value;
+                const end = slot.querySelector(".slot-end").value;
+                const newRow = createSlotRow(targetDay, start, end, i === 0);
+                targetContainer.appendChild(newRow);
+            });
+            refreshDeleteButtons(targetContainer);
+        });
+        enableSave();
+    }
+
+    function wireToggle(checkbox, index) {
+        checkbox.addEventListener("change", function () {
+            const container = document.getElementById(`slots-container-${index}`);
+            const text = document.getElementById(`unavailable-text-${index}`);
+
+            if (this.checked) {
+                container.classList.remove("hidden");
+                container.classList.add("flex");
+                text.classList.add("hidden");
+                if (container.querySelectorAll(".slot-row").length === 0) {
+                    const dayName = container.dataset.day;
+                    container.appendChild(createSlotRow(dayName, "09:00", "17:00", true));
+                }
+            } else {
+                container.classList.add("hidden");
+                container.classList.remove("flex");
+                text.classList.remove("hidden");
+            }
+            enableSave();
+        });
+    }
+
+    document.addEventListener("click", function (e) {
+        const addBtn = e.target.closest(".add-slot");
+        if (addBtn) {
+            const container = addBtn.closest(".slots-container");
+            addNextSlot(container, container.dataset.day);
+            return;
+        }
+        const copyBtn = e.target.closest(".copy-to-all");
+        if (copyBtn) {
+            copyToAllActiveDays(copyBtn.closest(".slots-container"));
+            return;
+        }
+        const delBtn = e.target.closest(".delete-slot");
+        if (delBtn) {
+            const row = delBtn.closest(".slot-row");
+            const container = row.parentNode;
+            if (container.querySelectorAll(".slot-row").length > 1) {
+                row.remove();
+                refreshDeleteButtons(container);
+                enableSave();
+            }
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".day-toggle").forEach((cb) => {
+            const index = cb.dataset.index;
+            if (index !== undefined) wireToggle(cb, index);
+        });
+        document.querySelectorAll(".slots-container").forEach(c => refreshDeleteButtons(c));
+    });
+</script>
+</body>
+</html>
