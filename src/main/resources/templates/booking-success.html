@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+<div class="max-w-2xl w-full bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+    <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
+        <i class="fa-solid fa-check"></i>
+    </div>
+
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">This meeting is scheduled</h1>
+    <p class="text-gray-500 mb-8">We sent an email with a calendar invitation with the details to everyone.</p>
+
+    <div class="border-t border-gray-100 pt-8 text-left space-y-6">
+        <div class="flex">
+            <span class="w-32 text-gray-400 font-bold text-sm uppercase">What</span>
+            <span class="text-gray-700 font-medium" th:text="${appt.eventType.title} + ' between ' + ${appt.eventType.user.username} + ' and ' + ${appt.guestName}"></span>
+        </div>
+<!--        <div class="flex">-->
+<!--            <span class="w-32 text-gray-400 font-bold text-sm uppercase">When</span>-->
+<!--            <span class="text-gray-700 font-medium" th:text="${appt.date} + ' @ ' + ${appt.startTime}"></span>-->
+<!--        </div>-->
+        <div class="flex">
+            <span class="w-32 text-gray-400 font-bold text-sm uppercase">When</span>
+            <div class="text-gray-700 font-medium">
+                <p th:text="${#temporals.format(appt.date, 'EEEE, MMMM d, yyyy')}"></p>
+                <p th:text="${appt.startTime} + ' (India Standard Time)'"></p>
+            </div>
+        </div>
+        <div class="flex">
+            <span class="w-32 text-gray-400 font-bold text-sm uppercase">Who</span>
+            <div class="text-sm">
+                <p class="font-medium text-gray-900" th:text="${appt.eventType.user.username} + ' (Host)'"></p>
+                <p class="text-gray-500" th:text="${appt.guestEmail}"></p>
+            </div>
+        </div>
+        <div class="flex">
+            <span class="w-32 text-gray-400 font-bold text-sm uppercase">Where</span>
+            <span class="text-blue-600 font-medium">Cal Video <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1"></i></span>
+        </div>
+    </div>
+
+<!--    <div class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400">-->
+<!--        Need to make a change? <a href="#" class="text-gray-600 underline">Reschedule</a> or <a href="#" class="text-gray-600 underline">Cancel</a>-->
+<!--    </div>-->
+    <div class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400" x-data="{ open: false }">
+        Need to make a change?
+        <a th:href="@{'/book/' + ${appt.eventType.user.username} + '/' + ${appt.eventType.slug}}"
+           class="text-gray-600 underline hover:text-black">Reschedule</a>
+        or
+        <button @click="open = true" class="text-gray-600 underline hover:text-red-600">Cancel</button>
+
+        <div x-show="open"
+             class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+             style="display: none;">
+
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-left transform transition-all">
+                <h3 class="text-xl font-bold text-gray-900 mb-1">Cancel Meeting</h3>
+                <p class="text-sm text-gray-500 mb-6">Please let us know why you need to cancel.</p>
+
+                <form th:action="@{'/book/cancel/' + ${appt.id}}" method="POST">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Reason for cancellation *</label>
+                    <textarea name="reason" required rows="4"
+                              class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-black transition mb-6"
+                              placeholder="Provide a brief reason..."></textarea>
+
+                    <div class="flex justify-end items-center gap-4">
+                        <button type="button" @click="open = false" class="text-gray-600 font-bold hover:text-black transition">Close</button>
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition">
+                            Confirm Cancellation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</body>
+</html>
