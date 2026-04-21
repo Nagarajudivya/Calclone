@@ -6,6 +6,10 @@ import com.calclone.repository.AppointmentRepository;
 import com.calclone.repository.UserRepository;
 import com.calclone.service.EventTypeService;
 import com.calclone.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -104,8 +108,26 @@ public class PublicBookingController {
         return "redirect:/bookings?cancelled=true";
     }
 
+//    @GetMapping("/bookings")
+//    public String showBookingsDashboard(Model model) {
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        String email = auth.getName();
+//
+//        userRepository.findByEmail(email).ifPresent(user -> {
+//            model.addAttribute("user", user);
+//        });
+//
+//        List<Appointment> allBookings = appointmentRepository.findAll();
+//        model.addAttribute("bookings", allBookings);
+//        return "bookings";
+//    }
+
     @GetMapping("/bookings")
-    public String showBookingsDashboard(Model model) {
+    public String showBookingsDashboard(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
 
@@ -113,8 +135,17 @@ public class PublicBookingController {
             model.addAttribute("user", user);
         });
 
-        List<Appointment> allBookings = appointmentRepository.findAll();
-        model.addAttribute("bookings", allBookings);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+
+        Page<Appointment> bookingPage = appointmentRepository.findAll(pageable);
+
+        model.addAttribute("bookings", bookingPage.getContent()); // The actual list
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", bookingPage.getTotalPages());
+        model.addAttribute("totalItems", bookingPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
         return "bookings";
     }
 }
