@@ -132,10 +132,13 @@ public class AvailabilityController {
     @PostMapping("/schedule/create/{userId}")
     public String createSchedule(@PathVariable Long userId,
                                  @RequestParam("scheduleName") String name) {
-
         Schedule schedule = new Schedule();
         schedule.setName(name);
+        schedule.setUserId(userId);
         schedule.setDefault(false);
+
+        schedule.setActiveDays("Mon - Fri");
+        schedule.setTimeRange("9:00 AM - 5:00 PM");
 
         scheduleRepository.save(schedule);
 

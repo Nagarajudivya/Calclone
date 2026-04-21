@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside th:fragment="sidebar(activePage)" class="w-64 bg-white border-r border-gray-200 p-4 space-y-2 hidden md:flex flex-col h-screen sticky top-0">
+    <div class="font-bold text-xl px-4 py-4 flex items-center gap-2">
+        <div class="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white text-xs">C</div>
+        Cal Clone
+    </div>
+    <nav class="space-y-1">
+        <a href="/events"
+           th:classappend="${activePage == 'events'} ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
+           class="flex items-center gap-3 px-4 py-2 rounded-md font-medium transition">
+            <i class="fa-solid fa-link"></i> Event types
+        </a>
+        <a href="/bookings"
+           th:classappend="${activePage == 'bookings'} ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
+           class="flex items-center gap-3 px-4 py-2 rounded-md font-medium transition">
+            <i class="fa-solid fa-calendar"></i> Bookings
+        </a>
+        <a href="/availability"
+           th:classappend="${activePage == 'availability'} ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'"
+           class="flex items-center gap-3 px-4 py-2 rounded-md font-medium transition">
+            <i class="fa-solid fa-clock"></i> Availability
+        </a>
+    </nav>
+</aside>
+
+</body>
+</html>

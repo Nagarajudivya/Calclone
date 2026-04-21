@@ -18,10 +18,7 @@
             <span class="w-32 text-gray-400 font-bold text-sm uppercase">What</span>
             <span class="text-gray-700 font-medium" th:text="${appt.eventType.title} + ' between ' + ${appt.eventType.user.username} + ' and ' + ${appt.guestName}"></span>
         </div>
-<!--        <div class="flex">-->
-<!--            <span class="w-32 text-gray-400 font-bold text-sm uppercase">When</span>-->
-<!--            <span class="text-gray-700 font-medium" th:text="${appt.date} + ' @ ' + ${appt.startTime}"></span>-->
-<!--        </div>-->
+
         <div class="flex">
             <span class="w-32 text-gray-400 font-bold text-sm uppercase">When</span>
             <div class="text-gray-700 font-medium">
@@ -42,12 +39,9 @@
         </div>
     </div>
 
-<!--    <div class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400">-->
-<!--        Need to make a change? <a href="#" class="text-gray-600 underline">Reschedule</a> or <a href="#" class="text-gray-600 underline">Cancel</a>-->
-<!--    </div>-->
     <div class="mt-12 pt-8 border-t border-gray-100 text-sm text-gray-400" x-data="{ open: false }">
         Need to make a change?
-        <a th:href="@{'/book/' + ${appt.eventType.user.username} + '/' + ${appt.eventType.slug}}"
+        <a th:href="@{'/book/' + ${appt.eventType.user.username} + '/' + ${appt.eventType.slug} + '?rescheduleId=' + ${appt.id}}"
            class="text-gray-600 underline hover:text-black">Reschedule</a>
         or
         <button @click="open = true" class="text-gray-600 underline hover:text-red-600">Cancel</button>

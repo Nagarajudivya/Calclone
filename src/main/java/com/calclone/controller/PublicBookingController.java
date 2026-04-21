@@ -12,7 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -36,39 +35,27 @@ public class PublicBookingController {
     @GetMapping("/book/{username}/{slug}")
     public String showPublicCalendar(@PathVariable String username,
                                      @PathVariable String slug,
-                                     @RequestParam(required = false) Long guestId,
+                                     @RequestParam(required = false) Long rescheduleId,
                                      Model model) {
-
         EventType event = eventTypeService.findByUsernameAndSlug(username, slug);
-        if (event == null || !event.isActive()) {
-            return "error";
-        }
+        if (event == null || !event.isActive()) return "error";
 
         model.addAttribute("event", event);
         model.addAttribute("user", event.getUser());
 
 
-        if (guestId != null) {
-            userService.getById(guestId).ifPresent(guest -> {
-                model.addAttribute("loggedInUser", guest);
+        if (rescheduleId != null) {
+            appointmentRepository.findById(rescheduleId).ifPresent(oldAppt -> {
+                model.addAttribute("rescheduleId", rescheduleId);
+                model.addAttribute("oldAppt", oldAppt);
             });
         }
-
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated()
-                && !(auth.getPrincipal() instanceof String)) {
-            userRepository.findByEmail(auth.getName()).ifPresent(loggedInUser -> {
-                model.addAttribute("loggedInName", loggedInUser.getUsername());
-                model.addAttribute("loggedInEmail", loggedInUser.getEmail());
-            });
-        }
-
         return "public-booking";
     }
 
     @PostMapping("/book/confirm")
     public String confirmBooking(@RequestParam Long eventTypeId,
+                                 @RequestParam(required = false) Long rescheduleId,
                                  @RequestParam String guestName,
                                  @RequestParam String guestEmail,
                                  @RequestParam String startTime,
@@ -81,15 +68,13 @@ public class PublicBookingController {
 
         boolean conflict = appointmentRepository.existsByEventTypeIdAndDateAndStartTime(eventTypeId, bookingDate, startTime);
 
-        if (conflict) {
-            // Prepare data for Error View (Image 2)
-            model.addAttribute("errorTitle", "Could not book the meeting.");
-            model.addAttribute("errorMessage", "Attempting to book a meeting that is already taken or in the past.");
-            model.addAttribute("event", eventTypeService.getById(eventTypeId));
-            return "booking-error";
+        Appointment appt;
+        if (rescheduleId != null) {
+            appt = appointmentRepository.findById(rescheduleId).orElse(new Appointment());
+        } else {
+            appt = new Appointment();
         }
 
-        Appointment appt = new Appointment();
         appt.setGuestName(guestName);
         appt.setGuestEmail(guestEmail);
         appt.setStartTime(startTime);
@@ -98,10 +83,9 @@ public class PublicBookingController {
         appt.setEventType(eventTypeService.getById(eventTypeId));
 
         Appointment savedAppt = appointmentRepository.save(appt);
-
-
-        return "redirect:/booking-success/" + savedAppt.getId();
+        return "redirect:/booking-success/" + savedAppt.getId() + (rescheduleId != null ? "?rescheduled=true" : "");
     }
+
 
     @GetMapping("/booking-success/{id}")
     public String showSuccess(@PathVariable Long id, Model model) {
