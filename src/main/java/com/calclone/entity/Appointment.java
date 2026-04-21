@@ -26,4 +26,14 @@ public class Appointment {
 
     @ManyToOne
     private EventType eventType;
+
+
+    public enum BookingStatus {
+        UPCOMING,
+        PAST,
+        CANCELLED
+    }
+
+    @Enumerated(EnumType.STRING)
+    private BookingStatus status;
 }

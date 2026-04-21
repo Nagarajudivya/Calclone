@@ -21,11 +21,15 @@
 
         <div class="flex items-center justify-between mb-6">
             <div class="flex bg-white p-1 rounded-lg border border-gray-200 text-sm font-medium">
-                <button class="px-3 py-1.5 bg-gray-100 rounded-md shadow-sm">Upcoming</button>
-                <button class="px-3 py-1.5 text-gray-500 hover:text-gray-700">Unconfirmed</button>
-                <button class="px-3 py-1.5 text-gray-500 hover:text-gray-700">Recurring</button>
-                <button class="px-3 py-1.5 text-gray-500 hover:text-gray-700">Past</button>
-                <button class="px-3 py-1.5 text-gray-500 hover:text-gray-700">Canceled</button>
+                <a th:href="@{/bookings(filter='upcoming')}"
+                   th:classappend="${filter == 'upcoming'} ? 'bg-gray-100' : ''"
+                   class="px-3 py-1.5 rounded-md">Upcoming</a>
+                <a th:href="@{/bookings(filter='past')}"
+                   th:classappend="${filter == 'past'} ? 'bg-gray-100' : ''"
+                   class="px-3 py-1.5">Past</a>
+                <a th:href="@{/bookings(filter='cancelled')}"
+                   th:classappend="${filter == 'cancelled'} ? 'bg-gray-100' : ''"
+                   class="px-3 py-1.5">Cancelled</a>
                 <button class="px-3 py-1.5 text-gray-500 hover:text-gray-700 border-l border-gray-200 ml-1">
                     <i class="fa-solid fa-sliders mr-1.5"></i>Filter
                 </button>
@@ -63,7 +67,22 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center">
+                    <div class="flex items-center gap-2">
+
+                        <!-- Cancel Button -->
+                        <form th:action="@{'/book/cancel/' + ${appt.id}}" method="post">
+                            <input type="hidden" name="reason" value="User cancelled"/>
+
+                            <!-- CSRF (if Spring Security enabled) -->
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                            <button type="submit"
+                                    class="text-red-500 text-sm hover:underline">
+                                Cancel
+                            </button>
+                        </form>
+
+                        <!-- 3 dots menu -->
                         <button class="p-2 text-gray-400 hover:bg-gray-200 rounded-md transition">
                             <i class="fa-solid fa-ellipsis"></i>
                         </button>
@@ -82,29 +101,40 @@
 
             <div class="px-6 py-3 border-t border-gray-200 flex items-center justify-between text-sm text-gray-500">
                 <div class="flex items-center gap-2">
-                    <select onchange="window.location.href='/bookings?page=0&size=' + this.value"
+
+                    <select id="pageSize"
+                            th:data-filter="${filter}"
                             class="bg-transparent border border-gray-300 rounded px-1 py-0.5 outline-none">
-                        <option th:value="10" th:selected="${pageSize == 10}">10</option>
-                        <option th:value="25" th:selected="${pageSize == 25}">25</option>
+
+                        <option value="5" th:selected="${pageSize == 5}">5</option>
+                        <option value="10" th:selected="${pageSize == 10}">10</option>
+                        <option value="25" th:selected="${pageSize == 25}">25</option>
+
                     </select>
                     <span>rows per page</span>
                 </div>
 
-                <div class="flex items-center gap-4">
-        <span th:if="${totalItems > 0}">
-            <span th:text="${(currentPage * pageSize) + 1}"></span>-<span th:text="${T(java.lang.Math).min((currentPage + 1) * pageSize, totalItems)}"></span>
-            of
-            <span th:text="${totalItems}"></span>
-        </span>
+                    <div class="flex items-center gap-4">
+    <span th:if="${totalItems > 0}">
+        <span th:text="${(currentPage * pageSize) + 1}"></span> -
 
-                    <div class="flex gap-1">
-                        <a th:href="@{/bookings(page=${currentPage - 1}, size=${pageSize})}"
+        <span th:text="${(currentPage + 1) * pageSize > totalItems
+                        ? totalItems
+                        : (currentPage + 1) * pageSize}"></span>
+
+        of
+        <span th:text="${totalItems}"></span>
+    </span>
+
+                        <div class="flex gap-1">
+
+                        <a th:href="@{/bookings(page=${currentPage - 1}, size=${pageSize}, filter=${filter})}"
                            th:classappend="${currentPage <= 0} ? 'opacity-20 pointer-events-none' : 'hover:bg-gray-100'"
                            class="p-1 px-2 border border-gray-200 rounded transition text-gray-600">
                             <i class="fa-solid fa-chevron-left text-xs"></i>
                         </a>
 
-                        <a th:href="@{/bookings(page=${currentPage + 1}, size=${pageSize})}"
+                        <a th:href="@{/bookings(page=${currentPage + 1}, size=${pageSize}, filter=${filter})}"
                            th:classappend="${currentPage + 1 >= totalPages} ? 'opacity-20 pointer-events-none' : 'hover:bg-gray-100'"
                            class="p-1 px-2 border border-gray-200 rounded transition text-gray-600">
                             <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -113,17 +143,17 @@
                 </div>
             </div>
         </div>
-
-        <div class="fixed bottom-6 right-6 w-64 bg-white border border-gray-200 rounded-xl p-4 shadow-lg">
-            <h4 class="font-bold text-sm">Try the new bookings page</h4>
-            <p class="text-xs text-gray-500 mt-1 mb-3">A redesigned booking page including a calendar view.</p>
-            <button class="text-xs font-bold border border-gray-300 px-3 py-1 rounded-md hover:bg-gray-50">Try it</button>
-            <div class="mt-3 opacity-20">
-                <div class="h-20 bg-gray-100 rounded-md border border-dashed border-gray-400"></div>
-            </div>
-        </div>
     </div>
 </main>
+
+<script>
+    document.getElementById("pageSize").addEventListener("change", function () {
+        const size = this.value;
+        const filter = this.getAttribute("data-filter");
+
+        window.location.href = `/bookings?page=0&size=${size}&filter=${filter}`;
+    });
+</script>
 
 </body>
 </html>

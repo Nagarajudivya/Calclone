@@ -10,8 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -70,8 +68,6 @@ public class PublicBookingController {
         LocalDate bookingDate = LocalDate.parse(date);
 
 
-        boolean conflict = appointmentRepository.existsByEventTypeIdAndDateAndStartTime(eventTypeId, bookingDate, startTime);
-
         Appointment appt;
         if (rescheduleId != null) {
             appt = appointmentRepository.findById(rescheduleId).orElse(new Appointment());
@@ -101,50 +97,70 @@ public class PublicBookingController {
 
     @PostMapping("/book/cancel/{id}")
     public String cancelBooking(@PathVariable Long id, @RequestParam String reason) {
-        if (reason == null || reason.trim().isEmpty()) {
-            return "redirect:/booking-success/" + id + "?error=Reason+Required";
-        }
-        appointmentRepository.deleteById(id);
-        return "redirect:/bookings?cancelled=true";
+
+        Appointment appt = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found"));
+
+        appt.setStatus(Appointment.BookingStatus.CANCELLED);
+        appointmentRepository.save(appt);
+
+        return "redirect:/bookings?status=cancelled";
     }
 
-//    @GetMapping("/bookings")
-//    public String showBookingsDashboard(Model model) {
-//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//        String email = auth.getName();
-//
-//        userRepository.findByEmail(email).ifPresent(user -> {
-//            model.addAttribute("user", user);
-//        });
-//
-//        List<Appointment> allBookings = appointmentRepository.findAll();
-//        model.addAttribute("bookings", allBookings);
-//        return "bookings";
-//    }
 
     @GetMapping("/bookings")
     public String showBookingsDashboard(
+            @RequestParam(defaultValue = "upcoming") String filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
+        List<Appointment> all = appointmentRepository.findAll();
 
-        userRepository.findByEmail(email).ifPresent(user -> {
-            model.addAttribute("user", user);
-        });
+        for (Appointment appt : all) {
 
+            if (appt.getStatus() == null) {
+
+                if (appt.getDate().isBefore(LocalDate.now())) {
+                    appt.setStatus(Appointment.BookingStatus.PAST);
+                } else {
+                    appt.setStatus(Appointment.BookingStatus.UPCOMING);
+                }
+            }
+        }
+
+        appointmentRepository.saveAll(all);
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("date").descending());
+        Page<Appointment> bookingPage;
 
-        Page<Appointment> bookingPage = appointmentRepository.findAll(pageable);
+        LocalDate today = LocalDate.now();
 
-        model.addAttribute("bookings", bookingPage.getContent()); // The actual list
+        switch (filter.toLowerCase()) {
+
+            case "past":
+                bookingPage = appointmentRepository
+                        .findByStatusAndDateBefore(Appointment.BookingStatus.PAST, today, pageable);
+                break;
+
+            case "cancelled":
+                bookingPage = appointmentRepository
+                        .findByStatus(Appointment.BookingStatus.CANCELLED, pageable);
+                break;
+
+            case "upcoming":
+            default:
+                bookingPage = appointmentRepository
+                        .findByStatusAndDateAfter(Appointment.BookingStatus.UPCOMING, today.minusDays(1), pageable);
+                break;
+        }
+
+        model.addAttribute("bookings", bookingPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", bookingPage.getTotalPages());
         model.addAttribute("totalItems", bookingPage.getTotalElements());
         model.addAttribute("pageSize", size);
+        model.addAttribute("filter", filter);
 
         return "bookings";
     }
