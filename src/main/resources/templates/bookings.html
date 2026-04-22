@@ -53,9 +53,20 @@
                         <div class="min-w-[120px]">
                             <p class="text-sm font-medium" th:text="${#temporals.format(appt.date, 'EEE, dd MMM')}">Tue, 21 Apr</p>
                             <p class="text-sm text-gray-500" th:text="${appt.startTime}">1:30pm</p>
-                            <a href="#" class="flex items-center gap-2 text-blue-600 text-sm mt-1 font-medium hover:underline">
-                                <i class="fa-solid fa-video text-xs text-gray-600"></i> Join Cal Video
+
+                            <a th:if="${appt.meetingLink != null and !#strings.isEmpty(appt.meetingLink)}"
+                               th:href="${appt.meetingLink}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="flex items-center gap-2 text-blue-600 text-sm mt-1 font-medium hover:underline">
+                                <i class="fa-solid fa-video text-xs text-gray-600"></i>
+                                Join Cal Video
                             </a>
+                            <span th:unless="${appt.meetingLink != null and !#strings.isEmpty(appt.meetingLink)}"
+                                  class="flex items-center gap-2 text-gray-400 text-sm mt-1">
+    <i class="fa-solid fa-video text-xs"></i>
+    No link yet
+</span>
                         </div>
 
                         <div>
@@ -105,8 +116,6 @@
                     <select id="pageSize"
                             th:data-filter="${filter}"
                             class="bg-transparent border border-gray-300 rounded px-1 py-0.5 outline-none">
-
-                        <option value="5" th:selected="${pageSize == 5}">5</option>
                         <option value="10" th:selected="${pageSize == 10}">10</option>
                         <option value="25" th:selected="${pageSize == 25}">25</option>
 

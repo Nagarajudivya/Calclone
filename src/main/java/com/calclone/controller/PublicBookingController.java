@@ -2,10 +2,13 @@ package com.calclone.controller;
 
 import com.calclone.entity.Appointment;
 import com.calclone.entity.EventType;
+import com.calclone.entity.User;
 import com.calclone.repository.AppointmentRepository;
 import com.calclone.repository.UserRepository;
 import com.calclone.service.EventTypeService;
+import com.calclone.service.GoogleMeetService;
 import com.calclone.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,13 +27,15 @@ public class PublicBookingController {
     private final AppointmentRepository appointmentRepository;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final GoogleMeetService googleMeetService;
 
     public PublicBookingController(EventTypeService eventTypeService, AppointmentRepository appointmentRepository,
-                                   UserService userService,  UserRepository userRepository){
+                                   UserService userService,  UserRepository userRepository, GoogleMeetService googleMeetService){
         this.eventTypeService = eventTypeService;
         this.appointmentRepository = appointmentRepository;
         this.userService = userService;
         this.userRepository = userRepository;
+        this.googleMeetService = googleMeetService;
     }
 
 
@@ -38,6 +43,7 @@ public class PublicBookingController {
     public String showPublicCalendar(@PathVariable String username,
                                      @PathVariable String slug,
                                      @RequestParam(required = false) Long rescheduleId,
+                                     HttpServletRequest request,
                                      Model model) {
         EventType event = eventTypeService.findByUsernameAndSlug(username, slug);
         if (event == null || !event.isActive()) return "error";
@@ -63,10 +69,31 @@ public class PublicBookingController {
                                  @RequestParam String startTime,
                                  @RequestParam String date,
                                  @RequestParam(required = false) String notes,
+                                 HttpServletRequest request,
                                  Model model) {
 
         LocalDate bookingDate = LocalDate.parse(date);
 
+        EventType eventType = eventTypeService.getById(eventTypeId);
+        User host = eventType.getUser();
+
+        System.out.println("=== BOOKING DEBUG ===");
+        System.out.println("Host: " + host.getEmail());
+        System.out.println("Host token in DB: " + host.getGoogleAccessToken());
+
+        String token = host.getGoogleAccessToken();
+        if (token == null || token.isEmpty()) {
+            token = (String) request.getSession().getAttribute("googleAccessToken");
+            System.out.println("Using session token as fallback: " + (token != null ? "found" : "NOT FOUND"));
+        }
+
+        String meetLink = null;
+        if (token != null && !token.isEmpty()) {
+            meetLink = googleMeetService.createGoogleMeet(token);
+            System.out.println("Generated Meet Link: " + meetLink);
+        } else {
+            System.out.println("No token available!");
+        }
 
         Appointment appt;
         if (rescheduleId != null) {
@@ -81,6 +108,7 @@ public class PublicBookingController {
         appt.setDate(bookingDate);
         appt.setNotes(notes);
         appt.setEventType(eventTypeService.getById(eventTypeId));
+        appt.setMeetingLink(meetLink);
 
         Appointment savedAppt = appointmentRepository.save(appt);
         return "redirect:/booking-success/" + savedAppt.getId() + (rescheduleId != null ? "?rescheduled=true" : "");
@@ -163,5 +191,54 @@ public class PublicBookingController {
         model.addAttribute("filter", filter);
 
         return "bookings";
+    }
+
+
+    @PostMapping("/book")
+    public String createBooking(
+            @RequestParam String date,
+            @RequestParam String startTime,
+            @RequestParam String guestName,
+            HttpServletRequest request
+    ) {
+
+        String token = (String) request.getSession().getAttribute("googleAccessToken");
+
+        String meetLink = googleMeetService.createGoogleMeet(token);
+
+        System.out.println("Meet Link: " + meetLink);
+
+        Appointment appt = new Appointment();
+        appt.setDate(LocalDate.parse(date));
+        appt.setStartTime(startTime);
+        appt.setGuestName(guestName);
+        appt.setMeetingLink(meetLink);
+
+        appointmentRepository.save(appt);
+
+        return "redirect:/bookings";
+    }
+
+
+    @GetMapping("/admin/backfill-meet-links")
+    @ResponseBody
+    public String backfillMeetLinks(HttpServletRequest request) {
+        String token = (String) request.getSession().getAttribute("googleAccessToken");
+        if (token == null) return "No token in session. Please login first.";
+
+        List<Appointment> all = appointmentRepository.findAll();
+        int updated = 0;
+
+        for (Appointment appt : all) {
+            if (appt.getMeetingLink() == null || appt.getMeetingLink().isEmpty()) {
+                String link = googleMeetService.createGoogleMeet(token);
+                if (link != null) {
+                    appt.setMeetingLink(link);
+                    appointmentRepository.save(appt);
+                    updated++;
+                }
+            }
+        }
+        return "Updated " + updated + " appointments with meet links.";
     }
 }

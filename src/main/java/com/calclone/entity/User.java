@@ -30,4 +30,7 @@ public class User {
 
     @Column
     private String password;
+
+    @Column(length = 1000)
+    private String googleAccessToken;
 }

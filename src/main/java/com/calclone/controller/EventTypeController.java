@@ -6,7 +6,6 @@ import com.calclone.repository.UserRepository;
 import com.calclone.service.EventTypeService;
 import com.calclone.service.UserService;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
@@ -26,16 +25,28 @@ public class EventTypeController {
         this.userRepository = userRepository;
     }
 
+
     @GetMapping({"", "/"})
     public String events(Model model) {
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName(); // always the email for form login
+
+        OAuth2User oauthUser = (OAuth2User) auth.getPrincipal();
+
+        String email = oauthUser.getAttribute("email");
+        String name = oauthUser.getAttribute("name");
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseGet(() -> {
+                    User newUser = new User();
+                    newUser.setEmail(email);
+                    newUser.setUsername(name);
+                    return userRepository.save(newUser);
+                });
 
         model.addAttribute("user", user);
         model.addAttribute("events", eventTypeService.getByUser(user.getId()));
+
         return "events";
     }
 
@@ -103,7 +114,7 @@ public class EventTypeController {
         model.addAttribute("user", user);
         model.addAttribute("event", event);
 
-        // Autofill for logged-in user
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated()
                 && !(auth.getPrincipal() instanceof String)) {

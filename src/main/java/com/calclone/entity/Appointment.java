@@ -36,4 +36,6 @@ public class Appointment {
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
+
+    private String meetingLink;
 }
