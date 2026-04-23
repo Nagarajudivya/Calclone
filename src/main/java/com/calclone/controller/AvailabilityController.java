@@ -3,8 +3,10 @@ package com.calclone.controller;
 import com.calclone.entity.Availability;
 import com.calclone.entity.Schedule;
 import com.calclone.entity.TimeSlot;
+import com.calclone.entity.User;
 import com.calclone.repository.AvailabilityRepository;
 import com.calclone.repository.ScheduleRepository;
+import com.calclone.service.UserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +22,13 @@ public class AvailabilityController {
 
     private final AvailabilityRepository availabilityRepository;
     private final ScheduleRepository scheduleRepository;
+    private final UserService userService;
 
-    public AvailabilityController(AvailabilityRepository availabilityRepository, ScheduleRepository scheduleRepository){
+    public AvailabilityController(AvailabilityRepository availabilityRepository, ScheduleRepository scheduleRepository,
+                                  UserService userService){
         this.availabilityRepository = availabilityRepository;
         this.scheduleRepository = scheduleRepository;
+        this.userService = userService;
     }
 
     private final List<String> days = Arrays.asList("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
@@ -66,12 +71,11 @@ public class AvailabilityController {
 
     @GetMapping
     public String showAvailability(Model model) {
-        Map<String, Object> currentUser = Map.of(
-                "id", 1L,
-                "username", "divya",
-                "timezone", "Asia/Kolkata"
-        );
-        model.addAttribute("user", currentUser);
+
+        User user = userService.getLoggedInUser();
+        model.addAttribute("user", user);
+
+        model.addAttribute("timezone", "Asia/Kolkata");
 
         List<Schedule> schedules = scheduleRepository.findByUserId(1L);
 
@@ -94,7 +98,8 @@ public class AvailabilityController {
 
     @GetMapping("/edit/{id}")
     public String editSchedule(@PathVariable Long id, Model model) {
-        Long currentUserId = 1L;
+//        Long currentUserId = 1L;
+        Long currentUserId = userService.getLoggedInUser().getId();
 
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseGet(() -> scheduleRepository.findFirstByUserId(currentUserId)

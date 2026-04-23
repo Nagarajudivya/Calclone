@@ -5,6 +5,7 @@ import com.calclone.entity.EventType;
 import com.calclone.entity.User;
 import com.calclone.repository.AppointmentRepository;
 import com.calclone.repository.UserRepository;
+import com.calclone.service.EmailService;
 import com.calclone.service.EventTypeService;
 import com.calclone.service.GoogleMeetService;
 import com.calclone.service.UserService;
@@ -28,14 +29,17 @@ public class PublicBookingController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final GoogleMeetService googleMeetService;
+    private final EmailService emailService;
 
     public PublicBookingController(EventTypeService eventTypeService, AppointmentRepository appointmentRepository,
-                                   UserService userService,  UserRepository userRepository, GoogleMeetService googleMeetService){
+                                   UserService userService,  UserRepository userRepository,
+                                   GoogleMeetService googleMeetService, EmailService emailService){
         this.eventTypeService = eventTypeService;
         this.appointmentRepository = appointmentRepository;
         this.userService = userService;
         this.userRepository = userRepository;
         this.googleMeetService = googleMeetService;
+        this.emailService = emailService;
     }
 
 
@@ -111,6 +115,7 @@ public class PublicBookingController {
         appt.setMeetingLink(meetLink);
 
         Appointment savedAppt = appointmentRepository.save(appt);
+        emailService.sendBookingConfirmation(savedAppt);
         return "redirect:/booking-success/" + savedAppt.getId() + (rescheduleId != null ? "?rescheduled=true" : "");
     }
 
@@ -142,6 +147,10 @@ public class PublicBookingController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             Model model) {
+
+
+        User user = userService.getLoggedInUser();
+        model.addAttribute("user", user);
 
         List<Appointment> all = appointmentRepository.findAll();
 
