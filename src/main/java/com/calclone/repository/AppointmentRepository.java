@@ -1,6 +1,7 @@
 package com.calclone.repository;
 
 import com.calclone.entity.Appointment;
+import com.calclone.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,11 +17,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     Page<Appointment> findByStatus(Appointment.BookingStatus status, Pageable pageable);
 
-    Page<Appointment> findByDateAfter(LocalDate date, Pageable pageable);
-
-    Page<Appointment> findByDateBefore(LocalDate date, Pageable pageable);
-
     Page<Appointment> findByStatusAndDateAfter(Appointment.BookingStatus status, LocalDate date, Pageable pageable);
 
     Page<Appointment> findByStatusAndDateBefore(Appointment.BookingStatus status, LocalDate date, Pageable pageable);
+
+    List<Appointment> findByDateAndStartTimeAndEventType_User(LocalDate date, String startTime, User user);
 }

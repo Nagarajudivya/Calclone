@@ -116,6 +116,12 @@
         </div>
 
         <div class="flex-1 p-8">
+
+            <div th:if="${error}"
+                 class="text-red-600 font-semibold p-3 border border-red-300 rounded-lg bg-red-50">
+                <span th:text="${error}"></span>
+            </div>
+
             <form th:action="@{/book/confirm}" method="POST" class="space-y-5">
                 <input type="hidden" name="rescheduleId" th:value="${rescheduleId}">
                 <input type="hidden" name="eventTypeId" th:value="${event.id}">

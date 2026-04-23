@@ -17,8 +17,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -47,14 +47,30 @@ public class PublicBookingController {
     public String showPublicCalendar(@PathVariable String username,
                                      @PathVariable String slug,
                                      @RequestParam(required = false) Long rescheduleId,
-                                     HttpServletRequest request,
+                                     @RequestParam(required = false) String date,
                                      Model model) {
         EventType event = eventTypeService.findByUsernameAndSlug(username, slug);
         if (event == null || !event.isActive()) return "error";
 
-        model.addAttribute("event", event);
-        model.addAttribute("user", event.getUser());
+        User host = event.getUser();
 
+        model.addAttribute("event", event);
+        model.addAttribute("user", host);
+//        model.addAttribute("user", event.getUser());
+
+
+        if (date != null) {
+
+            String token = host.getGoogleAccessToken();
+
+            List<String[]> busySlots = googleMeetService.getBusySlots(token, date);
+            System.out.println("Total busy slots found: " + busySlots.size());
+
+            List<String> slots = generateSlots(event.getDuration(), busySlots);
+            System.out.println("Available slots: " + slots); // ADD THIS
+            model.addAttribute("slots", slots);
+
+        }
 
         if (rescheduleId != null) {
             appointmentRepository.findById(rescheduleId).ifPresent(oldAppt -> {
@@ -81,6 +97,21 @@ public class PublicBookingController {
         EventType eventType = eventTypeService.getById(eventTypeId);
         User host = eventType.getUser();
 
+        boolean alreadyBooked = appointmentRepository
+                .findByDateAndStartTimeAndEventType_User(bookingDate, startTime, host)
+                .stream()
+                .anyMatch(a -> a.getStatus() != Appointment.BookingStatus.CANCELLED
+                        && (rescheduleId == null || !a.getId().equals(rescheduleId)));
+
+        if (alreadyBooked) {
+            model.addAttribute("error", "This slot is already booked. Please choose another time.");
+            model.addAttribute("event", eventType);
+            model.addAttribute("user", host);
+
+            return "redirect:/booking-error?eventTypeId=" + eventTypeId +
+                    "&message=This+slot+is+already+booked.+Please+choose+another+time.";
+        }
+
         System.out.println("=== BOOKING DEBUG ===");
         System.out.println("Host: " + host.getEmail());
         System.out.println("Host token in DB: " + host.getGoogleAccessToken());
@@ -92,9 +123,31 @@ public class PublicBookingController {
         }
 
         String meetLink = null;
+
         if (token != null && !token.isEmpty()) {
-            meetLink = googleMeetService.createGoogleMeet(token);
+
+            java.time.format.DateTimeFormatter formatter =
+                    java.time.format.DateTimeFormatter.ofPattern("h:mma");
+
+            java.time.LocalTime start = java.time.LocalTime.parse(startTime.toUpperCase(), formatter);
+
+
+            java.time.LocalTime end = start.plusMinutes(eventType.getDuration());
+
+
+            String startDateTime = date + "T" + start + ":00+05:30";
+            String endDateTime = date + "T" + end + ":00+05:30";
+
+
+            meetLink = googleMeetService.createGoogleMeet(
+                    token,
+                    startDateTime,
+                    endDateTime,
+                    guestEmail
+            );
+
             System.out.println("Generated Meet Link: " + meetLink);
+
         } else {
             System.out.println("No token available!");
         }
@@ -203,51 +256,53 @@ public class PublicBookingController {
     }
 
 
-    @PostMapping("/book")
-    public String createBooking(
-            @RequestParam String date,
-            @RequestParam String startTime,
-            @RequestParam String guestName,
-            HttpServletRequest request
-    ) {
+    private List<String> generateSlots(int duration, List<String[]> busySlots) {
 
-        String token = (String) request.getSession().getAttribute("googleAccessToken");
+        List<String> slots = new ArrayList<>();
 
-        String meetLink = googleMeetService.createGoogleMeet(token);
+        java.time.LocalTime dayStart = java.time.LocalTime.of(9, 0);
+        java.time.LocalTime dayEnd   = java.time.LocalTime.of(17, 0);
 
-        System.out.println("Meet Link: " + meetLink);
+        java.time.LocalTime current = dayStart;
 
-        Appointment appt = new Appointment();
-        appt.setDate(LocalDate.parse(date));
-        appt.setStartTime(startTime);
-        appt.setGuestName(guestName);
-        appt.setMeetingLink(meetLink);
+        while (!current.plusMinutes(duration).isAfter(dayEnd)) {
 
-        appointmentRepository.save(appt);
+            java.time.LocalTime slotStart = current;
+            java.time.LocalTime slotEnd   = current.plusMinutes(duration);
 
-        return "redirect:/bookings";
+
+            boolean isBusy = busySlots.stream().anyMatch(b -> {
+                try {
+                    // Google returns ISO strings like "2025-04-24T17:00:00+05:30"
+                    java.time.LocalTime busyStart = java.time.OffsetDateTime.parse(b[0]).toLocalTime();
+                    java.time.LocalTime busyEnd   = java.time.OffsetDateTime.parse(b[1]).toLocalTime();
+
+
+                    return slotStart.isBefore(busyEnd) && slotEnd.isAfter(busyStart);
+                } catch (Exception e) {
+                    return false;
+                }
+            });
+
+            if (!isBusy) {
+                slots.add(current.format(java.time.format.DateTimeFormatter.ofPattern("h:mma")));
+            }
+
+            current = current.plusMinutes(duration);
+        }
+
+        return slots;
     }
 
-
-    @GetMapping("/admin/backfill-meet-links")
-    @ResponseBody
-    public String backfillMeetLinks(HttpServletRequest request) {
-        String token = (String) request.getSession().getAttribute("googleAccessToken");
-        if (token == null) return "No token in session. Please login first.";
-
-        List<Appointment> all = appointmentRepository.findAll();
-        int updated = 0;
-
-        for (Appointment appt : all) {
-            if (appt.getMeetingLink() == null || appt.getMeetingLink().isEmpty()) {
-                String link = googleMeetService.createGoogleMeet(token);
-                if (link != null) {
-                    appt.setMeetingLink(link);
-                    appointmentRepository.save(appt);
-                    updated++;
-                }
-            }
-        }
-        return "Updated " + updated + " appointments with meet links.";
+    @GetMapping("/booking-error")
+    public String showBookingError(
+            @RequestParam String message,
+            @RequestParam Long eventTypeId,
+            Model model) {
+        EventType eventType = eventTypeService.getById(eventTypeId);
+        model.addAttribute("event", eventType);
+        model.addAttribute("errorTitle", "Slot Already Booked");
+        model.addAttribute("errorMessage", message);
+        return "booking-error";
     }
 }

@@ -7,11 +7,13 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class GoogleMeetService {
 
-    public String createGoogleMeet(String accessToken) {
+    public String createGoogleMeet(String accessToken, String startDateTime, String endDateTime, String guestEmail) {
 
         try {
             String urlStr =
@@ -31,68 +33,98 @@ public class GoogleMeetService {
             String requestId = "req-" + System.currentTimeMillis();
 
             String json = """
-            {
-              "summary": "Meeting",
-              "start": {
-                "dateTime": "2026-04-22T10:00:00+05:30"
-              },
-              "end": {
-                "dateTime": "2026-04-22T10:30:00+05:30"
-              },
-              "conferenceData": {
-                "createRequest": {
-                  "requestId": "%s"
-                }
+        {
+          "summary": "Meeting",
+          "start": {
+            "dateTime": "%s"
+          },
+          "end": {
+            "dateTime": "%s"
+          },
+          "attendees": [
+            { "email": "%s" }
+          ],
+          "conferenceData": {
+            "createRequest": {
+              "requestId": "%s",
+              "conferenceSolutionKey": {
+                "type": "hangoutsMeet"
               }
             }
-            """.formatted(requestId);
+          }
+        }
+        """.formatted(startDateTime, endDateTime, guestEmail, requestId);
 
-            // send request
             OutputStream os = conn.getOutputStream();
             os.write(json.getBytes());
             os.flush();
             os.close();
 
-
-            int responseCode = conn.getResponseCode();
-            System.out.println("Google API Response Code: " + responseCode);
-
-
-            BufferedReader br = responseCode >= 200 && responseCode < 300
-                    ? new BufferedReader(new InputStreamReader(conn.getInputStream()))
-                    : new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder response = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) response.append(line);
-            br.close();
-
-            System.out.println("Google Response: " + response);
-
 
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(response.toString());
 
-            if (root.has("hangoutLink")) {
-                return root.get("hangoutLink").asText();
-            }
+            return root.path("hangoutLink").asText();
 
-            JsonNode entryPoints = root
-                    .path("conferenceData")
-                    .path("entryPoints");
-
-            if (entryPoints.isArray()) {
-                for (JsonNode ep : entryPoints) {
-                    if ("video".equals(ep.path("entryPointType").asText())) {
-                        return ep.path("uri").asText();
-                    }
-                }
-            }
 
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
+    }
 
-        return null;
+
+    public List<String[]> getBusySlots(String accessToken, String date) {
+        try {
+            String urlStr = "https://www.googleapis.com/calendar/v3/freeBusy";
+
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+
+            String body = """
+        {
+          "timeMin": "%sT00:00:00+05:30",
+          "timeMax": "%sT23:59:59+05:30",
+          "items": [{"id": "primary"}]
+        }
+        """.formatted(date, date);
+
+            OutputStream os = conn.getOutputStream();
+            os.write(body.getBytes());
+            os.flush();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) response.append(line);
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.toString());
+
+            List<String[]> busy = new ArrayList<>();
+            JsonNode arr = root.path("calendars").path("primary").path("busy");
+
+            for (JsonNode node : arr) {
+                busy.add(new String[]{
+                        node.get("start").asText(),
+                        node.get("end").asText()
+                });
+            }
+
+            return busy;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 }

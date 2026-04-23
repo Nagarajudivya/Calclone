@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
         import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/availability")
@@ -77,18 +76,22 @@ public class AvailabilityController {
 
         model.addAttribute("timezone", "Asia/Kolkata");
 
-        List<Schedule> schedules = scheduleRepository.findByUserId(1L);
+//        List<Schedule> schedules = scheduleRepository.findByUserId(1L);
 
-        if (schedules.isEmpty()) {
+        List<Schedule> schedules = scheduleRepository.findByUserId(user.getId());
+
+        boolean hasDefault = schedules.stream().anyMatch(Schedule::isDefault);
+
+        if (!hasDefault) {
             Schedule defaultSchedule = new Schedule();
             defaultSchedule.setName("Working hours");
-            defaultSchedule.setUserId(1L);
+            defaultSchedule.setUserId(user.getId());
             defaultSchedule.setActiveDays("Mon - Fri");
             defaultSchedule.setTimeRange("9:00 AM - 5:00 PM");
             defaultSchedule.setDefault(true);
-
             scheduleRepository.save(defaultSchedule);
-            schedules = List.of(defaultSchedule);
+
+            schedules = scheduleRepository.findByUserId(user.getId());
         }
 
         model.addAttribute("schedules", schedules);
@@ -137,6 +140,7 @@ public class AvailabilityController {
     @PostMapping("/schedule/create/{userId}")
     public String createSchedule(@PathVariable Long userId,
                                  @RequestParam("scheduleName") String name) {
+
         Schedule schedule = new Schedule();
         schedule.setName(name);
         schedule.setUserId(userId);
@@ -147,6 +151,48 @@ public class AvailabilityController {
 
         scheduleRepository.save(schedule);
 
+        return "redirect:/availability";
+    }
+
+
+    @PostMapping("/schedule/delete/{id}")
+    public String deleteSchedule(@PathVariable Long id) {
+        Long currentUserId = userService.getLoggedInUser().getId();
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+
+
+        if (schedule.isDefault()) {
+            return "redirect:/availability?error=cannot-delete-default";
+        }
+
+
+        if (!schedule.getUserId().equals(currentUserId)) {
+            return "redirect:/availability?error=unauthorized";
+        }
+
+        scheduleRepository.delete(schedule);
+        return "redirect:/availability";
+    }
+
+    @PostMapping("/schedule/duplicate/{id}")
+    public String duplicateSchedule(@PathVariable Long id) {
+        Long currentUserId = userService.getLoggedInUser().getId();
+        Schedule original = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+
+        if (!original.getUserId().equals(currentUserId)) {
+            return "redirect:/availability?error=unauthorized";
+        }
+
+        Schedule copy = new Schedule();
+        copy.setName(original.getName() + " (copy)");
+        copy.setUserId(currentUserId);
+        copy.setActiveDays(original.getActiveDays());
+        copy.setTimeRange(original.getTimeRange());
+        copy.setDefault(false);
+
+        scheduleRepository.save(copy);
         return "redirect:/availability";
     }
 }
