@@ -77,6 +77,13 @@
                                 <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                             </a>
 
+                            <button type="button"
+                                    th:data-url="@{'/events/book/' + ${user.username} + '/' + ${event.slug}}"
+                                    onclick="copyEventLink(this)"
+                                    class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">
+                                <i class="fa-solid fa-link text-xs"></i>
+                            </button>
+
                             <div class="relative" x-data="{ openMenu: false }">
                                 <button @click="openMenu = !openMenu" @click.away="openMenu = false"
                                         class="p-2 text-gray-400 hover:text-gray-600 border border-transparent hover:border-gray-200 rounded-md transition">
@@ -181,6 +188,28 @@
             slugInput.value = slug;
         });
     });
+</script>
+
+<script>
+    function copyEventLink(button) {
+
+        const relativeUrl = button.getAttribute('data-url');
+
+        const fullUrl = window.location.origin + relativeUrl;
+
+        navigator.clipboard.writeText(fullUrl).then(() => {
+            const icon = button.querySelector('i');
+
+            const originalClass = icon.className;
+            icon.className = "fa-solid fa-check text-xs text-green-500";
+
+            setTimeout(() => {
+                icon.className = originalClass;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy link: ', err);
+        });
+    }
 </script>
 
 </body>
