@@ -46,7 +46,8 @@
                 <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Today</span>
             </div>
 
-            <div th:each="appt : ${bookings}" class="group border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+            <div th:each="appt : ${bookings}" class="group border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
+                 th:onclick="|window.location.href='/booking-detail/${appt.id}'|">
                 <div class="flex items-start justify-between p-6">
                     <div class="flex gap-8">
 

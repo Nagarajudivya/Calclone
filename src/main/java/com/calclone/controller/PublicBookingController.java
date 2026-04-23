@@ -305,4 +305,12 @@ public class PublicBookingController {
         model.addAttribute("errorMessage", message);
         return "booking-error";
     }
+
+    @GetMapping("/booking-detail/{id}")
+    public String showBookingDetail(@PathVariable Long id, Model model) {
+        Appointment appt = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        model.addAttribute("appt", appt);
+        return "booking-detail";
+    }
 }
