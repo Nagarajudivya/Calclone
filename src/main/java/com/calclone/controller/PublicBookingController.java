@@ -199,11 +199,16 @@ public class PublicBookingController {
             @RequestParam(defaultValue = "upcoming") String filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) List<Long> eventTypeIds,
             Model model) {
 
 
         User user = userService.getLoggedInUser();
         model.addAttribute("user", user);
+
+        List<EventType> userEventTypes = eventTypeService.findByUser(user);
+        model.addAttribute("userEventTypes", userEventTypes);
+        model.addAttribute("selectedEventTypeIds", eventTypeIds != null ? eventTypeIds : List.of());
 
         List<Appointment> all = appointmentRepository.findAll();
 
@@ -246,32 +251,60 @@ public class PublicBookingController {
         switch (filter.toLowerCase()) {
 
             case "past":
-                bookingPage = appointmentRepository
-                        .findByStatus(Appointment.BookingStatus.PAST, pageable);
+                if (eventTypeIds != null && !eventTypeIds.isEmpty()) {
+                    bookingPage = appointmentRepository
+                            .findByStatusAndEventType_IdIn(Appointment.BookingStatus.PAST, eventTypeIds, pageable);
+                } else {
+                    bookingPage = appointmentRepository.findByStatus(Appointment.BookingStatus.PAST, pageable);
+                }
                 break;
 
+
             case "cancelled":
-                bookingPage = appointmentRepository
-                        .findByStatus(Appointment.BookingStatus.CANCELLED, pageable);
+                if (eventTypeIds != null && !eventTypeIds.isEmpty()) {
+                    bookingPage = appointmentRepository
+                            .findByStatusAndEventType_IdIn(Appointment.BookingStatus.CANCELLED, eventTypeIds, pageable);
+                } else {
+                    bookingPage = appointmentRepository.findByStatus(Appointment.BookingStatus.CANCELLED, pageable);
+                }
                 break;
 
             case "upcoming":
             default:
-                bookingPage = appointmentRepository.findByStatusInAndDateAfter(
-                        List.of(Appointment.BookingStatus.UPCOMING,
-                                Appointment.BookingStatus.RESCHEDULE_REQUESTED),
-                        today.minusDays(1),
-                        pageable
-                );
+                if (eventTypeIds != null && !eventTypeIds.isEmpty()) {
+                    bookingPage = appointmentRepository.findByStatusInAndDateAfterAndEventType_IdIn(
+                            List.of(Appointment.BookingStatus.UPCOMING,
+                                    Appointment.BookingStatus.RESCHEDULE_REQUESTED),
+                            today.minusDays(1),
+                            eventTypeIds,
+                            pageable
+                    );
+                } else {
+                    bookingPage = appointmentRepository.findByStatusInAndDateAfter(
+                            List.of(Appointment.BookingStatus.UPCOMING,
+                                    Appointment.BookingStatus.RESCHEDULE_REQUESTED),
+                            today.minusDays(1),
+                            pageable
+                    );
+                }
                 break;
         }
 
-        model.addAttribute("bookings", bookingPage.getContent());
+        List<Appointment> safeList = bookingPage.getContent()
+                .stream()
+                .filter(appt -> appt != null && appt.getId() != null)
+                .toList();
+
+        model.addAttribute("bookings", safeList);
+
+
+//        model.addAttribute("bookings", bookingPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", bookingPage.getTotalPages());
         model.addAttribute("totalItems", bookingPage.getTotalElements());
         model.addAttribute("pageSize", size);
         model.addAttribute("filter", filter);
+        model.addAttribute("hasEventTypeFilter", eventTypeIds != null && !eventTypeIds.isEmpty());
 
         return "bookings";
     }
@@ -294,7 +327,6 @@ public class PublicBookingController {
 
             boolean isBusy = busySlots.stream().anyMatch(b -> {
                 try {
-                    // Google returns ISO strings like "2025-04-24T17:00:00+05:30"
                     java.time.LocalTime busyStart = java.time.OffsetDateTime.parse(b[0]).toLocalTime();
                     java.time.LocalTime busyEnd   = java.time.OffsetDateTime.parse(b[1]).toLocalTime();
 

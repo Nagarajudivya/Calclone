@@ -1,6 +1,7 @@
 package com.calclone.repository;
 
 import com.calclone.entity.EventType;
+import com.calclone.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +16,6 @@ public interface EventTypeRepository extends JpaRepository<EventType, Long> {
     boolean existsByUserIdAndSlug(Long userId, String slug);
 
     List<EventType> findByTitleContainingIgnoreCase(String keyword);
+
+    List<EventType> findByUser(User user);
 }

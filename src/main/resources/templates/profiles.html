@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #bio-editor { min-height: 100px; outline: none; }
+        #bio-editor:empty:before { content: attr(data-placeholder); color: #9ca3af; }
+        #bio-editor h2 { font-size: 1.25rem; font-weight: 700; margin: 4px 0; }
+        #bio-editor h3 { font-size: 1rem; font-weight: 600; margin: 4px 0; }
+        #bio-editor ul { list-style: disc; padding-left: 1.25rem; }
+        #bio-editor ol { list-style: decimal; padding-left: 1.25rem; }
+
+        .toolbar-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .toolbar-btn:hover { background: #e5e7eb; }
+
+        #style-dropdown { position: relative; }
+        #style-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px); left: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 9999;
+            min-width: 160px;
+            padding: 4px;
+        }
+        #style-menu.open { display: block; }
+        .style-option {
+            padding: 7px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #374151;
+        }
+        .style-option:hover { background: #f3f4f6; }
+        .style-option.selected { background: #f3f4f6; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900">Profile</h1>
+    <p class="text-sm text-gray-500 mb-6">Manage settings for your profile.</p>
+
+    <form th:action="@{/profiles/update}" th:object="${user}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <!-- Hidden input to hold bio HTML -->
+        <input type="hidden" id="bioInput" name="bio" th:value="*{bio}" />
+
+        <div class="bg-white border border-gray-200 rounded-lg">
+            <div class="p-6 space-y-6">
+
+                <div class="flex items-center space-x-4">
+
+                    <!-- Avatar -->
+                    <div class="relative group">
+
+                        <div class="h-16 w-16 rounded-full overflow-hidden bg-gray-200 cursor-pointer"
+                             onclick="document.getElementById('avatarInput').click()">
+
+                            <img id="avatarPreview"
+                                 th:if="${user.avatar != null}"
+                                 th:src="${user.avatar}"
+                                 class="h-full w-full object-cover"/>
+
+                            <span th:if="${user.avatar == null}"
+                                  class="flex items-center justify-center h-full text-white bg-purple-600 text-2xl font-semibold"
+                                  th:text="${#strings.substring(user.fullName,0,1)}">
+</span>
+                        </div>
+
+                        <!-- Hidden file input -->
+                        <input type="file" id="avatarInput" name="avatarFile"
+                               class="hidden"
+                               accept="image/*"
+                               onchange="previewAvatar(event)">
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-3">
+                        <button type="button"
+                                onclick="document.getElementById('avatarInput').click()"
+                                class="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                            Upload
+                        </button>
+
+                        <button type="button"
+                                onclick="removeAvatar()"
+                                class="text-sm text-red-600 hover:text-red-800">
+                            Remove
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="space-y-4">
+
+                    <!-- Username -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Username</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">cal.com/</span>
+                            <input type="text" th:field="*{username}" class="flex-1 block w-full border border-gray-300 rounded-none rounded-r-md py-2 px-3 focus:ring-black focus:border-black sm:text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Full name</label>
+                        <input type="text" th:field="*{fullName}" class="mt-1 block w-full border border-gray-300 rounded-md py-2 px-3 focus:ring-black focus:border-black sm:text-sm">
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <div class="mt-1 flex items-center justify-between border border-gray-300 rounded-md py-2 px-3">
+                            <span class="text-sm text-gray-900" th:text="*{email}">email@example.com</span>
+                            <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">Primary</span>
+                        </div>
+                    </div>
+
+                    <!-- About / Bio with Rich Text Editor -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">About</label>
+                        <div class="mt-1 border border-gray-300 rounded-md" style="overflow: visible;">
+
+                            <!-- Toolbar -->
+                            <div class="flex items-center gap-1 px-3 py-2 border-b border-gray-200 bg-white rounded-t-md" style="overflow: visible; position: relative;">
+
+                                <!-- Style Dropdown -->
+                                <div id="style-dropdown">
+                                    <button type="button" id="style-btn" onclick="toggleStyleMenu()"
+                                            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-200 rounded-md hover:bg-gray-50 bg-white">
+                                        <span id="style-label">Normal</span>
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </button>
+                                    <div id="style-menu">
+                                        <div class="style-option selected" onclick="applyStyle('p', 'Normal', this)">Normal</div>
+                                        <div class="style-option" onclick="applyStyle('ol', 'Numbered List', this)">Numbered List</div>
+                                        <div class="style-option" onclick="applyStyle('ul', 'Bulleted List', this)">Bulleted List</div>
+                                        <div class="style-option" onclick="applyStyle('h2', 'Large Heading', this)" style="font-size:15px;font-weight:700;">Large Heading</div>
+                                        <div class="style-option" onclick="applyStyle('h3', 'Small Heading', this)" style="font-size:13px;font-weight:600;">Small Heading</div>
+                                    </div>
+                                </div>
+
+                                <div class="w-px h-5 bg-gray-200 mx-1"></div>
+
+                                <!-- Bold -->
+                                <button type="button" class="toolbar-btn font-bold" onclick="formatText('bold')" title="Bold">
+                                    <b>B</b>
+                                </button>
+
+                                <!-- Italic -->
+                                <button type="button" class="toolbar-btn italic" onclick="formatText('italic')" title="Italic">
+                                    <i>I</i>
+                                </button>
+
+                                <!-- Link -->
+                                <button type="button" class="toolbar-btn" onclick="insertLink()" title="Insert Link">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Editable Content Area -->
+                            <div id="bio-editor"
+                                 contenteditable="true"
+                                 data-placeholder="Tell us a little about yourself..."
+                                 class="p-3 text-sm text-gray-800 focus:outline-none min-h-[100px]">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="bg-gray-50 px-6 py-3 text-right border-t border-gray-200">
+                <button type="submit" onclick="syncBio()"
+                        class="bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-black transition">
+                    Update
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Danger Zone -->
+    <div class="mt-10 border border-red-200 rounded-lg overflow-hidden bg-white">
+        <div class="p-6">
+            <h3 class="text-lg font-medium text-gray-900">Danger zone</h3>
+            <p class="text-sm text-gray-500">Be careful. Account deletion cannot be undone.</p>
+        </div>
+        <div class="bg-red-50 px-6 py-3 text-right border-t border-red-200">
+            <button onclick="deleteAccount()"
+                    class="text-red-600 font-medium text-sm hover:underline">
+                Delete account
+            </button>
+<!--            <button class="text-red-600 font-medium text-sm hover:underline">Delete account</button>-->
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const saved = document.getElementById('bioInput').value;
+        if (saved) {
+            document.getElementById('bio-editor').innerHTML = saved;
+        }
+    });
+
+
+    function syncBio() {
+        document.getElementById('bioInput').value =
+            document.getElementById('bio-editor').innerHTML;
+    }
+
+
+    function toggleStyleMenu() {
+        document.getElementById('style-menu').classList.toggle('open');
+    }
+
+
+    document.addEventListener('click', (e) => {
+        if (!document.getElementById('style-dropdown').contains(e.target)) {
+            document.getElementById('style-menu').classList.remove('open');
+        }
+    });
+
+
+    function applyStyle(tag, label, el) {
+        document.getElementById('style-label').textContent = label;
+        document.getElementById('style-menu').classList.remove('open');
+
+        document.querySelectorAll('.style-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+
+        document.getElementById('bio-editor').focus();
+
+        if (tag === 'ol') {
+            document.execCommand('insertOrderedList', false, null);
+        } else if (tag === 'ul') {
+            document.execCommand('insertUnorderedList', false, null);
+        } else {
+            document.execCommand('formatBlock', false, tag);
+        }
+    }
+
+
+    function formatText(cmd) {
+        document.getElementById('bio-editor').focus();
+        document.execCommand(cmd, false, null);
+    }
+
+
+    function insertLink() {
+        const url = prompt('Enter URL (e.g. https://example.com):');
+        if (url) {
+            document.getElementById('bio-editor').focus();
+            document.execCommand('createLink', false, url);
+        }
+    }
+</script>
+
+<script>
+    function previewAvatar(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const preview = document.getElementById('avatarPreview');
+            const defaultAvatar = document.getElementById('defaultAvatar');
+
+            if (preview) {
+                preview.src = URL.createObjectURL(file);
+            } else {
+                const img = document.createElement("img");
+                img.id = "avatarPreview";
+                img.className = "h-full w-full object-cover";
+                img.src = URL.createObjectURL(file);
+
+                document.querySelector('.group div').innerHTML = '';
+                document.querySelector('.group div').appendChild(img);
+            }
+
+            if (defaultAvatar) defaultAvatar.style.display = "none";
+        }
+    }
+
+    function removeAvatar() {
+
+        document.getElementById('avatarInput').value = "";
+
+
+        const preview = document.getElementById('avatarPreview');
+        if (preview) preview.remove();
+
+        const avatarBox = document.querySelector('.group div');
+
+        avatarBox.innerHTML = `
+        <span class="flex items-center justify-center h-full text-white bg-purple-600 text-2xl font-semibold">
+            Y
+        </span>
+    `;
+
+        fetch('/profiles/remove-avatar', {
+            method: 'POST'
+        }).then(() => {
+            console.log("Avatar removed");
+        });
+    }
+</script>
+
+<script>
+    function deleteAccount() {
+        if (confirm("Are you sure? This cannot be undone.")) {
+            fetch('/profiles/delete-account', {
+                method: 'POST'
+            }).then(() => {
+                window.location.href = '/login?deleted';
+            });
+        }
+    }
+</script>
+</body>
+</html>

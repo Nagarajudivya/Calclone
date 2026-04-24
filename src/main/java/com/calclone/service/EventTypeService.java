@@ -1,6 +1,7 @@
 package com.calclone.service;
 
 import com.calclone.entity.EventType;
+import com.calclone.entity.User;
 import com.calclone.repository.EventTypeRepository;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,10 @@ public class EventTypeService {
 
     public boolean existsByUserIdAndSlug(Long userId, String slug) {
         return repository.existsByUserIdAndSlug(userId, slug);
+    }
+
+    public List<EventType> findByUser(User user) {
+        return repository.findByUser(user);
     }
 }
 

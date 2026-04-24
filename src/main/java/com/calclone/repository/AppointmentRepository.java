@@ -19,4 +19,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     Page<Appointment> findByStatusInAndDateAfter(
             List<Appointment.BookingStatus> statuses, LocalDate date, Pageable pageable);
+
+    Page<Appointment> findByStatusAndEventType_IdIn(
+            Appointment.BookingStatus status,
+            List<Long> eventTypeIds,
+            Pageable pageable);
+
+    Page<Appointment> findByStatusInAndDateAfterAndEventType_IdIn(
+            List<Appointment.BookingStatus> statuses,
+            LocalDate date,
+            List<Long> eventTypeIds,
+            Pageable pageable);
 }

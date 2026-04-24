@@ -33,4 +33,9 @@ public class User {
 
     @Column(length = 1000)
     private String googleAccessToken;
+
+    private String fullName;
+
+    private String avatar;
+
 }

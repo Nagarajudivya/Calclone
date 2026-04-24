@@ -35,14 +35,41 @@ public class UserService {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || !(auth.getPrincipal() instanceof OAuth2User)) {
+        if (auth == null || !auth.isAuthenticated()) {
             throw new RuntimeException("User not logged in");
         }
 
-        OAuth2User oauthUser = (OAuth2User) auth.getPrincipal();
-        String email = oauthUser.getAttribute("email");
+        Object principal = auth.getPrincipal();
+
+        String email = null;
+
+        if (principal instanceof OAuth2User oauthUser) {
+            email = oauthUser.getAttribute("email");
+
+
+        } else if (principal instanceof org.springframework.security.core.userdetails.User userDetails) {
+            email = userDetails.getUsername();
+        }
+
+        if (email == null) {
+            throw new RuntimeException("User not found");
+        }
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+
+    public User getCurrentUser() {
+        return getLoggedInUser();
+    }
+
+    public void saveProfile(User user) {
+        userRepository.save(user);
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
 }

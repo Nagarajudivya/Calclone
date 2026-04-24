@@ -39,18 +39,28 @@ public class EventTypeController {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        OAuth2User oauthUser = (OAuth2User) auth.getPrincipal();
+        Object principal = auth.getPrincipal();
+//        OAuth2User oauthUser = (OAuth2User) auth.getPrincipal();
 
-        String email = oauthUser.getAttribute("email");
-        String name = oauthUser.getAttribute("name");
+        String email = null;
+        String name = null;
+
+        if (principal instanceof OAuth2User oauthUser) {
+            email = oauthUser.getAttribute("email");
+            name = oauthUser.getAttribute("name");
+
+        } else if (principal instanceof org.springframework.security.core.userdetails.User userDetails) {
+            email = userDetails.getUsername();
+
+            User dbUser = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            name = dbUser.getUsername();
+        }
 
         User user = userRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setEmail(email);
-                    newUser.setUsername(name);
-                    return userRepository.save(newUser);
-                });
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
 
         model.addAttribute("user", user);
         model.addAttribute("keyword", keyword);
