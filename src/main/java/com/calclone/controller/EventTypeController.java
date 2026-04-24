@@ -2,15 +2,20 @@ package com.calclone.controller;
 
 import com.calclone.entity.EventType;
 import com.calclone.entity.User;
+import com.calclone.repository.EventTypeRepository;
 import com.calclone.repository.UserRepository;
 import com.calclone.service.EventTypeService;
 import com.calclone.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @Controller
 @RequestMapping("/events")
 public class EventTypeController {
@@ -18,16 +23,19 @@ public class EventTypeController {
     private final EventTypeService eventTypeService;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final EventTypeRepository eventTypeRepository;
 
-    public EventTypeController(EventTypeService eventTypeService, UserService userService, UserRepository userRepository){
+    public EventTypeController(EventTypeService eventTypeService, UserService userService, UserRepository userRepository,
+                               EventTypeRepository eventTypeRepository){
         this.eventTypeService = eventTypeService;
         this.userService = userService;
         this.userRepository = userRepository;
+        this.eventTypeRepository = eventTypeRepository;
     }
 
 
     @GetMapping({"", "/"})
-    public String events(Model model) {
+    public String events(Model model, @RequestParam(value = "keyword", required = false) String keyword) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -45,7 +53,12 @@ public class EventTypeController {
                 });
 
         model.addAttribute("user", user);
-        model.addAttribute("events", eventTypeService.getByUser(user.getId()));
+        model.addAttribute("keyword", keyword);
+//        model.addAttribute("events", eventTypeService.getByUser(user.getId()));
+
+        model.addAttribute("events", keyword != null && !keyword.trim().isEmpty()
+                ? eventTypeRepository.findByTitleContainingIgnoreCase(keyword)
+                : eventTypeService.getByUser(user.getId()));
 
         return "events";
     }
@@ -136,10 +149,14 @@ public class EventTypeController {
     }
 
     @GetMapping("/edit/{id}")
-    public String editDetailed(@PathVariable Long id, Model model) {
+    public String editDetailed(@PathVariable Long id, Model model, HttpServletRequest request) {
         EventType event = eventTypeService.getById(id);
         model.addAttribute("event", event);
         model.addAttribute("user", event.getUser());
+
+        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        model.addAttribute("baseUrl", baseUrl);
+
         return "edit-event";
     }
 

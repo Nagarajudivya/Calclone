@@ -11,7 +11,7 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-[#f9fafb] text-gray-900" x-data="{ openCreate: false }">
+<body class="bg-[#f9fafb] text-gray-900" x-data="{ openCreate: false}">
 
 <div class="flex min-h-screen">
 
@@ -24,12 +24,29 @@
                     <h1 class="text-xl font-bold text-gray-900">Event types</h1>
                     <p class="text-gray-500 text-sm">Configure different events for people to book on your calendar.</p>
                 </div>
-                <button @click="openCreate = true" class="bg-black text-white px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 hover:bg-zinc-800 transition">
-                    <i class="fa-solid fa-plus text-xs"></i> New
-                </button>
+                <div class="flex items-center gap-2">
+                        <form method="get" action="/events">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+                            </div>
+                            <input
+                                    type="text"
+                                    id="searchInput"
+                                    th:value="${keyword}"
+                                    placeholder="Search"
+                                    autocomplete="off"
+                                    class="block w-64 pl-10 pr-3 py-1.5 border border-gray-200 rounded-md bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black focus:border-black text-sm transition"
+                            >
+                        </div>
+                    </form>
+                    <button @click="openCreate = true" class="bg-black text-white px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 hover:bg-zinc-800 transition">
+                        <i class="fa-solid fa-plus text-xs"></i> New
+                    </button>
+                </div>
             </header>
 
-            <div class="bg-white border border-gray-200 rounded-lg overflow-visible shadow-sm">
+                <div id="eventsList" class="bg-white border border-gray-200 rounded-lg overflow-visible shadow-sm">
                 <div th:each="event : ${events}"
                      class="border-b border-gray-100 last:border-b-0 p-4 flex justify-between items-center hover:bg-gray-50 transition"
                      th:classappend="${!event.active} ? 'bg-gray-50/50' : ''">
@@ -187,6 +204,35 @@
                 .replace(/[^\w-]+/g, '');
             slugInput.value = slug;
         });
+    });
+</script>
+
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const eventsList = document.getElementById('eventsList');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function () {
+        const keyword = this.value.trim();
+        clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(() => {
+            const url = keyword ? `/events?keyword=${encodeURIComponent(keyword)}` : '/events';
+
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(res => res.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newList = doc.getElementById('eventsList');
+                    if (newList) {
+                        eventsList.innerHTML = newList.innerHTML;
+                        // Re-init Alpine for the new dropdown menus
+                        if (window.Alpine) Alpine.initTree(eventsList);
+                    }
+                })
+                .catch(err => console.error('Search failed:', err));
+        }, 300);
     });
 </script>
 

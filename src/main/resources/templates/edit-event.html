@@ -36,7 +36,8 @@
         }
       }">
 
-<nav class="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center sticky top-0 z-20">
+<nav class="bg-white border-b border-gray-200 px-4 py-3 flex justify-between items-center sticky top-0 z-20"
+    x-data="{ showEmbed: false, copied: false }">
     <div class="flex items-center gap-4">
         <a th:href="@{'/events/' + ${user.id}}" class="text-gray-400 hover:text-gray-600 transition">
             <i class="fa-solid fa-arrow-left"></i>
@@ -47,16 +48,47 @@
         </h1>
     </div>
     <div class="flex items-center gap-2">
-        <div class="flex items-center bg-gray-100 rounded-full p-1 mr-4">
-            <div class="w-8 h-4 bg-black rounded-full relative cursor-pointer">
-                <div class="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div>
-            </div>
-        </div>
-        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-md"><i class="fa-solid fa-arrow-up-right-from-square text-sm"></i></button>
-        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-md"><i class="fa-solid fa-link text-sm"></i></button>
-        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-md"><i class="fa-solid fa-code text-sm"></i></button>
-        <button class="p-2 text-red-500 hover:bg-red-50 rounded-md mr-2"><i class="fa-solid fa-trash-can text-sm"></i></button>
-        <button type="submit" form="eventForm" class="bg-[#111827] text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-800 transition">
+
+        <form th:action="@{'/events/toggle/' + ${event.id}}" method="post">
+            <button type="submit"
+                    class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none"
+                    th:classappend="${event.active} ? 'bg-black' : 'bg-gray-200'">
+                                <span class="inline-block h-3 w-3 transform rounded-full bg-white transition-transform"
+                                      th:classappend="${event.active} ? 'translate-x-5' : 'translate-x-1'"></span>
+            </button>
+        </form>
+
+        <a th:href="@{'/events/book/' + ${user.username} + '/' + ${event.slug}}"
+           target="_blank"
+           class="p-2 text-gray-500 hover:bg-gray-100 rounded-md"
+           title="Open booking page">
+            <i class="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+        </a>
+        <button type="button"
+                th:data-slug="@{'/events/book/' + ${user.username} + '/' + ${event.slug}}"
+                @click="
+                    const slug = $el.getAttribute('data-slug');
+                    const url = window.location.origin + slug;
+                    navigator.clipboard.writeText(url).then(() => {
+                        copied = true;
+                        setTimeout(() => copied = false, 2000);
+                    });
+                "
+                class="p-2 text-gray-500 hover:bg-gray-100 rounded-md"
+                title="Copy link">
+            <i class="fa-solid fa-check text-sm text-green-500" x-show="copied"></i>
+            <i class="fa-solid fa-link text-sm" x-show="!copied"></i>
+        </button>
+
+        <a th:href="@{'/events/delete/' + ${event.id} + '/' + ${user.id}}"
+           onclick="return confirm('Are you sure you want to delete this event?')"
+           class="p-2 text-red-500 hover:bg-red-50 rounded-md mr-2"
+           title="Delete">
+            <i class="fa-solid fa-trash-can text-sm"></i>
+        </a>
+
+        <button type="submit" form="eventForm"
+                class="bg-[#111827] text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-800 transition">
             Save
         </button>
     </div>
