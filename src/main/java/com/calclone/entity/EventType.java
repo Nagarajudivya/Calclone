@@ -29,6 +29,9 @@ public class EventType {
     private boolean active = true;
 
     private String location = "Cal Video (Default)";
+
+    @Column(name = "schedule_id")
+    private Long scheduleId;
 }
 
 

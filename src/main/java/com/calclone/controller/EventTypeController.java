@@ -1,8 +1,10 @@
 package com.calclone.controller;
 
 import com.calclone.entity.EventType;
+import com.calclone.entity.Schedule;
 import com.calclone.entity.User;
 import com.calclone.repository.EventTypeRepository;
+import com.calclone.repository.ScheduleRepository;
 import com.calclone.repository.UserRepository;
 import com.calclone.service.EventTypeService;
 import com.calclone.service.UserService;
@@ -24,13 +26,15 @@ public class EventTypeController {
     private final UserService userService;
     private final UserRepository userRepository;
     private final EventTypeRepository eventTypeRepository;
+    private final ScheduleRepository scheduleRepository;
 
     public EventTypeController(EventTypeService eventTypeService, UserService userService, UserRepository userRepository,
-                               EventTypeRepository eventTypeRepository){
+                               EventTypeRepository eventTypeRepository, ScheduleRepository scheduleRepository){
         this.eventTypeService = eventTypeService;
         this.userService = userService;
         this.userRepository = userRepository;
         this.eventTypeRepository = eventTypeRepository;
+        this.scheduleRepository = scheduleRepository;
     }
 
 
@@ -161,8 +165,12 @@ public class EventTypeController {
     @GetMapping("/edit/{id}")
     public String editDetailed(@PathVariable Long id, Model model, HttpServletRequest request) {
         EventType event = eventTypeService.getById(id);
+        User user = event.getUser();
         model.addAttribute("event", event);
-        model.addAttribute("user", event.getUser());
+        model.addAttribute("user", user);
+
+        List<Schedule> schedules = scheduleRepository.findByUserId(user.getId());
+        model.addAttribute("schedules", schedules);
 
         String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
         model.addAttribute("baseUrl", baseUrl);
@@ -180,6 +188,7 @@ public class EventTypeController {
         event.setDescription(updatedEvent.getDescription());
         event.setSlug(updatedEvent.getSlug());
         event.setDuration(updatedEvent.getDuration());
+        event.setScheduleId(updatedEvent.getScheduleId());
 
         eventTypeService.save(event);
 
