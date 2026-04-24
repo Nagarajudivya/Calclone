@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:x-bind="http://www.w3.org/1999/xhtml"
+      xmlns:x-transition="http://www.w3.org/1999/xhtml">
 <head>
     <title>Bookings - Cal Clone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        [x-cloak] { display: none !important; }
     </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-[#f3f4f6] flex h-screen text-gray-900">
 
@@ -47,7 +50,7 @@
             </div>
 
             <div th:each="appt : ${bookings}" class="group border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
-                 th:onclick="|window.location.href='/booking-detail/${appt.id}'|">
+                 @click.self="window.location.href='/booking-detail/' + [[${appt.id}]]">
                 <div class="flex items-start justify-between p-6">
                     <div class="flex gap-8">
 
@@ -79,25 +82,85 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
-
-                        <!-- Cancel Button -->
-                        <form th:action="@{'/book/cancel/' + ${appt.id}}" method="post">
-                            <input type="hidden" name="reason" value="User cancelled"/>
-
-                            <!-- CSRF (if Spring Security enabled) -->
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-
-                            <button type="submit"
-                                    class="text-red-500 text-sm hover:underline">
-                                Cancel
-                            </button>
-                        </form>
-
-                        <!-- 3 dots menu -->
-                        <button class="p-2 text-gray-400 hover:bg-gray-200 rounded-md transition">
+                    <div class="relative" x-data="{ open: false }" @click.stop>
+                        <button @click.stop="open = !open" class="p-2 text-gray-400 hover:bg-gray-200 rounded-md transition">
                             <i class="fa-solid fa-ellipsis"></i>
                         </button>
+
+                        <div x-show="open" @click.away="open = false"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             class="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] py-1 text-sm">
+
+                            <th:block th:if="${appt.status.name() == 'UPCOMING' or appt.status.name() == 'RESCHEDULE_REQUESTED'}">
+
+                                <a th:href="@{'/bookings/reschedule/' + ${appt.id}}"
+                                   class="flex items-center px-4 py-2 hover:bg-gray-50 text-gray-700">
+                                    <i class="fa-regular fa-clock mr-3"></i> Reschedule booking
+                                </a>
+
+                                <button type="button"
+                                        th:data-appt-id="${appt.id}"
+                                        @click.stop="
+                        let id = $el.getAttribute('data-appt-id');
+                        window.dispatchEvent(new CustomEvent('open-reschedule-modal', { detail: { id: id } }));
+                        open = false
+                    "
+                                        class="flex items-center w-full px-4 py-2 hover:bg-gray-50 text-gray-700">
+                                    <i class="fa-regular fa-paper-plane mr-3"></i> Request reschedule
+                                </button>
+
+                                <hr class="my-1 border-gray-100">
+
+                                <form th:action="@{'/book/cancel/' + ${appt.id}}" method="post"
+                                      @click.stop
+                                      onsubmit="return confirm('Cancel this event?')">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit" class="flex items-center w-full px-4 py-2 hover:bg-red-50 text-red-600">
+                                        <i class="fa-regular fa-circle-xmark mr-3"></i> Cancel event
+                                    </button>
+                                </form>
+
+                            </th:block>
+
+                            <!-- PAST: view details only -->
+                            <th:block th:if="${appt.status.name() == 'PAST'}">
+                                <a th:href="@{'/booking-detail/' + ${appt.id}}"
+                                   class="flex items-center px-4 py-2 hover:bg-gray-50 text-gray-500 cursor-not-allowed">
+                                    <i class="fa-regular fa-calendar mr-3"></i> View details
+                                </a>
+                                <span class="flex items-center px-4 py-2 text-gray-300 cursor-not-allowed">
+                <i class="fa-regular fa-clock mr-3"></i> Reschedule booking
+            </span>
+                                <span class="flex items-center px-4 py-2 text-gray-300 cursor-not-allowed">
+                <i class="fa-regular fa-paper-plane mr-3"></i> Request reschedule
+            </span>
+                                <hr class="my-1 border-gray-100">
+                                <span class="flex items-center px-4 py-2 text-gray-300 cursor-not-allowed">
+                <i class="fa-regular fa-circle-xmark mr-3"></i> Cancel event
+            </span>
+                            </th:block>
+
+                            <!-- CANCELLED: view details only -->
+                            <th:block th:if="${appt.status.name() == 'CANCELLED'}">
+                                <a th:href="@{'/booking-detail/' + ${appt.id}}"
+                                   class="flex items-center px-4 py-2 hover:bg-gray-50 text-gray-500">
+                                    <i class="fa-regular fa-calendar mr-3"></i> View details
+                                </a>
+                                <span class="flex items-center px-4 py-2 text-gray-300 cursor-not-allowed">
+                <i class="fa-regular fa-clock mr-3"></i> Reschedule booking
+            </span>
+                                <span class="flex items-center px-4 py-2 text-gray-300 cursor-not-allowed">
+                <i class="fa-regular fa-paper-plane mr-3"></i> Request reschedule
+            </span>
+                                <hr class="my-1 border-gray-100">
+                                <span class="flex items-center px-4 py-2 text-gray-300 cursor-not-allowed">
+                <i class="fa-regular fa-circle-xmark mr-3"></i> Cancel event
+            </span>
+                            </th:block>
+
+                        </div>
                     </div>
                 </div>
             </div>
@@ -164,6 +227,54 @@
         window.location.href = `/bookings?page=0&size=${size}&filter=${filter}`;
     });
 </script>
+
+<div x-data="{ show: false, apptId: null }"
+     @open-reschedule-modal.window="
+         apptId = $event.detail.id;
+         show = true;
+         console.log('Modal opened for apptId:', apptId);
+     ">
+
+    <div x-show="show"
+         x-cloak
+         @click="show = false"
+         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl" @click.stop>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                    <i class="fa-regular fa-clock text-gray-600"></i>
+                </div>
+                <h2 class="text-lg font-bold">Request reschedule</h2>
+            </div>
+
+            <p class="text-sm text-gray-500 mb-4">
+                This will notify the guest and ask them to pick a new time from your calendar.
+            </p>
+
+            <form method="post" x-bind:action="'/bookings/request-reschedule/' + apptId">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <label class="block text-sm font-bold text-gray-700 mb-1">
+                    Reason for reschedule request (Optional)
+                </label>
+                <textarea name="reason" rows="3"
+                          class="w-full p-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-black outline-none transition"></textarea>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" @click="show = false"
+                            class="px-4 py-2 text-sm font-bold text-gray-600">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-black text-white text-sm font-bold rounded-lg hover:bg-zinc-800">
+                        Request reschedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

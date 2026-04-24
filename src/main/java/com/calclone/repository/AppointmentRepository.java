@@ -12,14 +12,11 @@ import java.util.List;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-    boolean existsByEventTypeIdAndDateAndStartTime(Long eventTypeId, LocalDate date, String startTime);
-    List<Appointment> findByEventTypeUserUsernameOrderByDateDescStartTimeDesc(String username);
 
     Page<Appointment> findByStatus(Appointment.BookingStatus status, Pageable pageable);
 
-    Page<Appointment> findByStatusAndDateAfter(Appointment.BookingStatus status, LocalDate date, Pageable pageable);
-
-    Page<Appointment> findByStatusAndDateBefore(Appointment.BookingStatus status, LocalDate date, Pageable pageable);
-
     List<Appointment> findByDateAndStartTimeAndEventType_User(LocalDate date, String startTime, User user);
+
+    Page<Appointment> findByStatusInAndDateAfter(
+            List<Appointment.BookingStatus> statuses, LocalDate date, Pageable pageable);
 }

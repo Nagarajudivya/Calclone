@@ -182,15 +182,15 @@ public class PublicBookingController {
     }
 
     @PostMapping("/book/cancel/{id}")
-    public String cancelBooking(@PathVariable Long id, @RequestParam String reason) {
-
+    public String cancelBooking(@PathVariable Long id, @RequestParam(required = false) String reason) {
         Appointment appt = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Not found"));
 
         appt.setStatus(Appointment.BookingStatus.CANCELLED);
+        appt.setNotes(appt.getNotes() + " | Cancel Reason: " + reason);
         appointmentRepository.save(appt);
 
-        return "redirect:/bookings?status=cancelled";
+        return "redirect:/bookings?filter=cancelled";
     }
 
 
@@ -207,15 +207,32 @@ public class PublicBookingController {
 
         List<Appointment> all = appointmentRepository.findAll();
 
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+
         for (Appointment appt : all) {
 
-            if (appt.getStatus() == null) {
+            if (appt.getStatus() == Appointment.BookingStatus.CANCELLED) continue;
+            if (appt.getStatus() == Appointment.BookingStatus.RESCHEDULE_REQUESTED) continue;
 
-                if (appt.getDate().isBefore(LocalDate.now())) {
-                    appt.setStatus(Appointment.BookingStatus.PAST);
-                } else {
-                    appt.setStatus(Appointment.BookingStatus.UPCOMING);
-                }
+
+            java.time.LocalTime apptTime = null;
+            try {
+                java.time.format.DateTimeFormatter tf =
+                        java.time.format.DateTimeFormatter.ofPattern("h:mma");
+                apptTime = java.time.LocalTime.parse(appt.getStartTime().toUpperCase(), tf);
+            } catch (Exception e) {
+
+                apptTime = java.time.LocalTime.of(23, 59);
+            }
+
+            java.time.LocalDateTime apptDateTime =
+                    java.time.LocalDateTime.of(appt.getDate(), apptTime);
+
+            if (apptDateTime.isBefore(now)) {
+                appt.setStatus(Appointment.BookingStatus.PAST);
+            } else {
+                appt.setStatus(Appointment.BookingStatus.UPCOMING);
             }
         }
 
@@ -230,7 +247,7 @@ public class PublicBookingController {
 
             case "past":
                 bookingPage = appointmentRepository
-                        .findByStatusAndDateBefore(Appointment.BookingStatus.PAST, today, pageable);
+                        .findByStatus(Appointment.BookingStatus.PAST, pageable);
                 break;
 
             case "cancelled":
@@ -240,8 +257,12 @@ public class PublicBookingController {
 
             case "upcoming":
             default:
-                bookingPage = appointmentRepository
-                        .findByStatusAndDateAfter(Appointment.BookingStatus.UPCOMING, today.minusDays(1), pageable);
+                bookingPage = appointmentRepository.findByStatusInAndDateAfter(
+                        List.of(Appointment.BookingStatus.UPCOMING,
+                                Appointment.BookingStatus.RESCHEDULE_REQUESTED),
+                        today.minusDays(1),
+                        pageable
+                );
                 break;
         }
 
@@ -312,5 +333,31 @@ public class PublicBookingController {
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
         model.addAttribute("appt", appt);
         return "booking-detail";
+    }
+
+    @PostMapping("/bookings/request-reschedule/{id}")
+    public String requestReschedule(@PathVariable Long id, @RequestParam(required = false) String reason) {
+        Appointment appt = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        appt.setStatus(Appointment.BookingStatus.RESCHEDULE_REQUESTED);
+//        appt.setNotes(appt.getNotes() + " | Reschedule Request: " + reason);
+
+        String existingNotes = appt.getNotes() != null ? appt.getNotes() : "";
+        appt.setNotes(existingNotes + " | Reschedule Request: " + reason);
+        appointmentRepository.save(appt);
+
+
+        emailService.sendRescheduleRequestEmail(appt, reason);
+
+        return "redirect:/bookings?filter=upcoming&message=requested";
+    }
+
+    @GetMapping("/bookings/reschedule/{id}")
+    public String redirectToReschedule(@PathVariable Long id) {
+        Appointment appt = appointmentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        return "redirect:/book/" + appt.getEventType().getUser().getUsername() + "/" + appt.getEventType().getSlug() + "?rescheduleId=" + id;
     }
 }

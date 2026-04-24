@@ -93,4 +93,50 @@ public class EmailService {
                 meetLink
         );
     }
+
+
+    public void sendRescheduleRequestEmail(Appointment appt, String reason) {
+        try {
+            String subject = "Reschedule Request: " + appt.getEventType().getTitle();
+
+            String reschedueLink = "http://localhost:8080/book/" +
+                    appt.getEventType().getUser().getUsername() + "/" +
+                    appt.getEventType().getSlug() + "?rescheduleId=" + appt.getId();
+
+            String htmlBody = String.format("""
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                <h2 style="color: #f59e0b;">🗓 Reschedule Requested</h2>
+                <p>Hi <strong>%s</strong>,</p>
+                <p>The host has requested to reschedule your upcoming meeting: <strong>%s</strong>.</p>
+                
+                <div style="background: #fffbeb; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0;">
+                    <p style="margin: 0; font-weight: bold; color: #92400e;">Reason provided:</p>
+                    <p style="margin: 5px 0 0 0; font-style: italic;">"%s"</p>
+                </div>
+
+                <p>Please click the button below to select a new date and time that works for you:</p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="%s" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                        Pick a New Time
+                    </a>
+                </div>
+                
+                <p style="color: #6b7280; font-size: 13px;">The original booking for %s at %s will be updated once you pick a new slot.</p>
+            </div>
+            """,
+                    appt.getGuestName(),
+                    appt.getEventType().getTitle(),
+                    (reason != null && !reason.isEmpty()) ? reason : "No specific reason provided.",
+                    reschedueLink,
+                    appt.getDate(),
+                    appt.getStartTime()
+            );
+
+            sendEmail(appt.getGuestEmail(), subject, htmlBody);
+
+        } catch (MessagingException e) {
+            System.err.println("Failed to send reschedule email: " + e.getMessage());
+        }
+    }
 }

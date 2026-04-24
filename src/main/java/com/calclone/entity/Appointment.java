@@ -31,7 +31,8 @@ public class Appointment {
     public enum BookingStatus {
         UPCOMING,
         PAST,
-        CANCELLED
+        CANCELLED,
+        RESCHEDULE_REQUESTED
     }
 
     @Enumerated(EnumType.STRING)

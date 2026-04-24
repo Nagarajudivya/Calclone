@@ -203,7 +203,22 @@
                     btn.classList.add("text-gray-700", "hover:bg-zinc-100");
                     btn.onclick = () => selectDate(date, btn);
                 }
-                calendar.appendChild(btn);
+
+
+                const isToday = date.getDate() === today.getDate() &&
+                    date.getMonth() === today.getMonth() &&
+                    date.getFullYear() === today.getFullYear();
+                if (isToday) {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "flex flex-col items-center justify-center";
+                    wrapper.appendChild(btn);
+                    const dot = document.createElement("div");
+                    dot.className = "w-1 h-1 rounded-full bg-black mt-0.5";
+                    wrapper.appendChild(dot);
+                    calendar.appendChild(wrapper);
+                } else {
+                    calendar.appendChild(btn);
+                }
             }
             prevBtn.disabled = (currentMonth === today.getMonth() && currentYear === today.getFullYear());
             prevBtn.style.opacity = prevBtn.disabled ? "0.3" : "1";
@@ -221,7 +236,12 @@
 
         function generateTimeSlots() {
             timeSlots.innerHTML = "";
-            for (let i = 540; i < 1080; i += 30) {
+
+            const selectedDateVal = new Date(currentYear, currentMonth, parseInt(selectedDateEl.innerText));
+            const isToday = selectedDateVal.toDateString() === today.toDateString();
+            const nowMinutes = today.getHours() * 60 + today.getMinutes();
+
+            for (let i = 540; i < 1020; i += 30) {
                 let hour = Math.floor(i / 60);
                 let min = i % 60;
                 let ampm = hour >= 12 ? "pm" : "am";
@@ -230,8 +250,16 @@
 
                 let btn = document.createElement("button");
                 btn.innerText = time;
-                btn.className = "w-full py-3 border border-gray-100 rounded-lg text-sm font-bold text-gray-700 hover:border-black hover:bg-gray-50 transition";
-                btn.onclick = () => selectTime(time);
+
+                const isPastSlot = isToday && i <= nowMinutes;
+
+                if (isPastSlot) {
+                    btn.className = "w-full py-3 border border-gray-100 rounded-lg text-sm font-bold text-gray-300 cursor-not-allowed transition";
+                    btn.disabled = true;
+                } else {
+                    btn.className = "w-full py-3 border border-gray-100 rounded-lg text-sm font-bold text-gray-700 hover:border-black hover:bg-gray-50 transition";
+                    btn.onclick = () => selectTime(time);
+                }
                 timeSlots.appendChild(btn);
             }
         }
