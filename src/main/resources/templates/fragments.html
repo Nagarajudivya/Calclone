@@ -20,12 +20,17 @@
              class="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg cursor-pointer transition group">
 
             <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-[11px] font-bold uppercase">
-                <span th:text="${user != null ? #strings.substring(user.fullName, 0, 1) : 'U'}"></span>
+                <span
+                        th:text="${#strings.substring(
+    user.fullName != null && user.fullName != '' ? user.fullName : user.username,
+    0, 1
+)}"></span>
             </div>
 
             <div class="flex items-center gap-2 flex-1 min-w-0">
     <span class="font-semibold text-gray-900 truncate text-sm"
-          th:text="${user != null ? user.fullName : 'User Name'}"></span>
+          th:text="${user.fullName != null && user.fullName != '' ? user.fullName : user.username}"
+    ></span>
                 <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
             </div>
         </div>
@@ -83,6 +88,29 @@
             <span>Availability</span>
         </a>
     </nav>
+
+    <div class="mt-auto border-t border-gray-100 p-4 space-y-2">
+        <a th:href="@{/{username}(username=${user.username})}" target="_blank"
+           class="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md transition">
+            <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+            <span>View public page</span>
+        </a>
+
+        <button onclick="copyPublicLink()"
+                class="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md transition">
+            <i class="fa-regular fa-copy"></i>
+            <span>Copy public page link</span>
+        </button>
+
+    </div>
+
+    <script th:inline="javascript">
+        function copyPublicLink() {
+            const url = window.location.origin + '/' + /*[[${user.username}]]*/ 'user';
+            navigator.clipboard.writeText(url);
+            alert("Link copied to clipboard!");
+        }
+    </script>
 
 </aside>
 

@@ -53,7 +53,7 @@ public class EventTypeController {
             email = oauthUser.getAttribute("email");
             name = oauthUser.getAttribute("name");
 
-        } else if (principal instanceof org.springframework.security.core.userdetails.User userDetails) {
+        } else if (principal instanceof User userDetails) {
             email = userDetails.getUsername();
 
             User dbUser = userRepository.findByEmail(email)
@@ -62,8 +62,23 @@ public class EventTypeController {
             name = dbUser.getUsername();
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+
+
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+
+            user.setFullName(name);
+            user.setUsername(
+                    email != null ? email.split("@")[0] : "user" + System.currentTimeMillis()
+            );
+//            user.setUsername(name != null ? name : "Google User");
+            userRepository.save(user);
+        }
 
 
         model.addAttribute("user", user);

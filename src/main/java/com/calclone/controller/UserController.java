@@ -21,13 +21,13 @@ public class UserController {
         return "home";
     }
 
-    @GetMapping("/u/{username}")
-    public String getUserProfile(@PathVariable String username, Model model) {
-        User user = userService.getByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        model.addAttribute("user", user);
-        return "profile";
-    }
+//    @GetMapping("/u/{username}")
+//    public String getUserProfile(@PathVariable String username, Model model) {
+//        User user = userService.getByUsername(username)
+//                .orElseThrow(() -> new RuntimeException("User not found"));
+//        model.addAttribute("user", user);
+//        return "profile";
+//    }
 
     @GetMapping("/create")
     public String showForm(Model model) {

@@ -392,4 +392,21 @@ public class PublicBookingController {
 
         return "redirect:/book/" + appt.getEventType().getUser().getUsername() + "/" + appt.getEventType().getSlug() + "?rescheduleId=" + id;
     }
+
+
+    @GetMapping("/{username}")
+    public String publicProfile(@PathVariable String username, Model model) {
+
+        User user = userRepository.findByUsername(username).orElse(null);
+
+        if (user == null) {
+            return "error";
+        }
+
+        model.addAttribute("profileUser", user);
+
+        model.addAttribute("eventTypes", eventTypeService.findByUser(user));
+
+        return "public-page";
+    }
 }

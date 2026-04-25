@@ -38,4 +38,7 @@ public class User {
 
     private String avatar;
 
+    @Column(nullable = true)
+    private String jobTitle;
+
 }
