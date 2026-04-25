@@ -38,9 +38,17 @@ public class SecurityConfig {
                         .permitAll()
                 )
 
+//                .oauth2Login(oauth -> oauth
+//                        .loginPage("/login")
+//                        .successHandler(oAuth2SuccessHandler)
+//                )
+
                 .oauth2Login(oauth -> oauth
                         .loginPage("/login")
                         .successHandler(oAuth2SuccessHandler)
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/login/oauth2/code/*")
+                        )
                 )
 
                 .logout(logout -> logout
