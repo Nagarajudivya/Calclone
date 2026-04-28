@@ -1,7 +1,8 @@
 package com.calclone.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-        import lombok.Data;
+import lombok.Data;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -22,6 +23,7 @@ public class Schedule {
     private Long userId;
 
 
+    @JsonIgnore
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
     private List<Availability> availabilities;
 

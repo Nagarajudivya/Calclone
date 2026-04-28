@@ -1,5 +1,6 @@
 package com.calclone.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,6 +24,7 @@ public class Availability {
     private boolean active;
 
     @ManyToOne
+    @JsonIgnore
     private Schedule schedule;
 
     @OneToMany(mappedBy = "availability", cascade = CascadeType.ALL, orphanRemoval = true)
