@@ -37,34 +37,29 @@ public class EventTypeController {
         this.scheduleRepository = scheduleRepository;
     }
 
-
     @GetMapping({"", "/"})
     public String events(Model model, @RequestParam(value = "keyword", required = false) String keyword) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        Object principal = auth.getPrincipal();
-//        OAuth2User oauthUser = (OAuth2User) auth.getPrincipal();
-
         String email = null;
         String name = null;
+
+        if (auth != null) {
+            email = auth.getName();
+        }
+
+        Object principal = auth.getPrincipal();
 
         if (principal instanceof OAuth2User oauthUser) {
             email = oauthUser.getAttribute("email");
             name = oauthUser.getAttribute("name");
-
-        } else if (principal instanceof User userDetails) {
-            email = userDetails.getUsername();
-
-            User dbUser = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            name = dbUser.getUsername();
         }
 
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (email == null) {
+            throw new RuntimeException("Email is null - authentication issue");
+        }
 
         User user = userRepository.findByEmail(email).orElse(null);
 
@@ -76,14 +71,12 @@ public class EventTypeController {
             user.setUsername(
                     email != null ? email.split("@")[0] : "user" + System.currentTimeMillis()
             );
-//            user.setUsername(name != null ? name : "Google User");
+
             userRepository.save(user);
         }
 
-
         model.addAttribute("user", user);
         model.addAttribute("keyword", keyword);
-//        model.addAttribute("events", eventTypeService.getByUser(user.getId()));
 
         model.addAttribute("events", keyword != null && !keyword.trim().isEmpty()
                 ? eventTypeRepository.findByTitleContainingIgnoreCase(keyword)
