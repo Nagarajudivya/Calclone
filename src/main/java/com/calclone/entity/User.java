@@ -41,4 +41,7 @@ public class User {
     @Column(nullable = true)
     private String jobTitle;
 
+    @Column(name = "google_refresh_token")
+    private String googleRefreshToken;
+
 }

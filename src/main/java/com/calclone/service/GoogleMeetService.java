@@ -2,6 +2,7 @@ package com.calclone.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -12,6 +13,12 @@ import java.util.List;
 
 @Service
 public class GoogleMeetService {
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String clientId;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-secret}")
+    private String clientSecret;
 
     public String createGoogleMeet(String accessToken, String startDateTime, String endDateTime, String guestEmail) {
 
@@ -125,6 +132,42 @@ public class GoogleMeetService {
         } catch (Exception e) {
             e.printStackTrace();
             return new ArrayList<>();
+        }
+    }
+
+
+    public String refreshAccessToken(String refreshToken) {
+        try {
+            URL url = new URL("https://oauth2.googleapis.com/token");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+            String body = "client_id=" + clientId
+                    + "&client_secret=" + clientSecret
+                    + "&refresh_token=" + refreshToken
+                    + "&grant_type=refresh_token";
+
+            conn.getOutputStream().write(body.getBytes());
+
+            int status = conn.getResponseCode();
+            InputStream is = (status >= 400) ? conn.getErrorStream() : conn.getInputStream();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) response.append(line);
+
+            System.out.println("Token refresh response: " + response);
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.toString());
+            String newToken = root.path("access_token").asText();
+            return newToken.isEmpty() ? null : newToken;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

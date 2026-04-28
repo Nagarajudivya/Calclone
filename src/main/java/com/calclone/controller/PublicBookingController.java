@@ -117,10 +117,30 @@ public class PublicBookingController {
         System.out.println("Host token in DB: " + host.getGoogleAccessToken());
 
         String token = host.getGoogleAccessToken();
+
+        if (host.getGoogleRefreshToken() != null) {
+            String refreshed = googleMeetService.refreshAccessToken(host.getGoogleRefreshToken());
+            if (refreshed != null) {
+                token = refreshed;
+                host.setGoogleAccessToken(refreshed);
+                userRepository.save(host);
+                System.out.println("Token refreshed successfully!");
+            } else {
+                System.out.println("Refresh failed, using existing token");
+            }
+        }
+
+
+        System.out.println("Token is: " + token);
+
         if (token == null || token.isEmpty()) {
             token = (String) request.getSession().getAttribute("googleAccessToken");
-            System.out.println("Using session token as fallback: " + (token != null ? "found" : "NOT FOUND"));
         }
+
+//        if (token == null || token.isEmpty()) {
+//            token = (String) request.getSession().getAttribute("googleAccessToken");
+//            System.out.println("Using session token as fallback: " + (token != null ? "found" : "NOT FOUND"));
+//        }
 
         String meetLink = null;
 
@@ -151,6 +171,11 @@ public class PublicBookingController {
         } else {
             System.out.println("No token available!");
         }
+
+
+        System.out.println("Token is: " + token);
+        System.out.println("Meet link result: " + meetLink);
+
 
         Appointment appt;
         if (rescheduleId != null) {

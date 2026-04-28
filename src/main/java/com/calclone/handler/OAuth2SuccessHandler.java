@@ -43,12 +43,22 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
 
         String accessToken = client.getAccessToken().getTokenValue();
 
+        final String refreshToken =
+                (client.getRefreshToken() != null)
+                        ? client.getRefreshToken().getTokenValue()
+                        : null;
+
         request.getSession().setAttribute("googleAccessToken", accessToken);
 
 //        super.onAuthenticationSuccess(request, response, authentication);
         String email = oauthToken.getPrincipal().getAttribute("email");
         userRepository.findByEmail(email).ifPresent(user -> {
             user.setGoogleAccessToken(accessToken);
+
+            if (client.getRefreshToken() != null) {
+                user.setGoogleRefreshToken(client.getRefreshToken().getTokenValue());
+            }
+//            user.setGoogleRefreshToken(refreshToken);
             userRepository.save(user);
 
             System.out.println("Token saved for user: " + email);
