@@ -197,7 +197,7 @@ DELETE /api/bookings/{id}
 **Divya Nagaraju**
 
 - Java Backend Developer
-- GitHub: https://github.com/your-github-username
+- GitHub: https://github.com/Nagarajudivya
 
 ---
 
