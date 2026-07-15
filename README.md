@@ -1,4 +1,4 @@
-# 📅 Cal Clone
+# Cal Clone
 
 A full-stack appointment scheduling application inspired by **Cal.com**, built using **Spring Boot**, **Javascript**, and **PostgreSQL**. The application enables users to schedule meetings, manage availability, and book appointments through an intuitive interface.
 
